@@ -1,0 +1,3 @@
+[submodule "thirdparty/tonic"]
+	path = thirdparty/tonic
+	url = https://github.com/TonicAudio/Tonic.git

@@ -1,0 +1,7 @@
+# SCsub
+
+Import('env')
+
+env.add_source_files(env.modules_sources, "*.cpp")
+env.add_source_files(env.modules_sources, "src/*.cpp")
+env.add_source_files(env.modules_sources, "thirdparty/tonic/src/Tonic/*.cpp")
