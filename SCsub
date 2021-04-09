@@ -1,7 +1,11 @@
-# SCsub
-
 Import('env')
 
-env.add_source_files(env.modules_sources, "*.cpp")
-env.add_source_files(env.modules_sources, "src/*.cpp")
-env.add_source_files(env.modules_sources, "thirdparty/tonic/src/Tonic/*.cpp")
+module_env = env.Clone()
+
+module_env .add_source_files(env.modules_sources, "*.cpp")
+module_env .add_source_files(env.modules_sources, "src/*.cpp")
+module_env .add_source_files(env.modules_sources, "thirdparty/tonic/src/Tonic/*.cpp")
+
+if env["platform"] == "windows":
+    # ignore 'warning C4068: unknown pragma' as '#pragma mark' is used in Tonic
+	module_env.Append( CCFLAGS=["/wd4068"] ) 
