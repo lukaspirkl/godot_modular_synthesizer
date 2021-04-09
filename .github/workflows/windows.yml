@@ -28,6 +28,7 @@ jobs:
       # Clone our module under the correct directory
       - uses: actions/checkout@v2
         with:
+          submodules: recursive
           path: modules/modular_synthesizer
 
       # Upload cache on completion and check it out now
@@ -94,6 +95,7 @@ jobs:
       # Clone our module under the correct directory
       - uses: actions/checkout@v2
         with:
+          submodules: recursive
           path: modules/modular_synthesizer
 
       # Upload cache on completion and check it out now
