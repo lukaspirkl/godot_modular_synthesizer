@@ -1,5 +1,9 @@
-#include "modular_synth_editor_plugin.h"
+#include "modular_synthesizer_editor_plugin.h"
 #include "editor/editor_scale.h"
+
+void ModularSynthesizerEditorPlugin::edit(Object *p_object) {
+	modular_synthesizer_editor->edit(Object::cast_to<ModularSynthesizer>(p_object));
+}
 
 bool ModularSynthesizerEditorPlugin::handles(Object *p_object) const {
 	return p_object->is_class("ModularSynthesizer");
@@ -31,6 +35,18 @@ ModularSynthesizerEditorPlugin::ModularSynthesizerEditorPlugin(EditorNode *p_nod
 }
 
 ModularSynthesizerEditorPlugin::~ModularSynthesizerEditorPlugin() {
+}
+
+void ModularSynthesizerEditor::edit(ModularSynthesizer *p_synth) {
+	if (p_synth) {
+		synth = Ref<ModularSynthesizer>(p_synth);
+	} else {
+		synth.unref();
+	}
+
+	if (synth.is_null()) {
+		hide();
+	}
 }
 
 ModularSynthesizerEditor::ModularSynthesizerEditor() {
