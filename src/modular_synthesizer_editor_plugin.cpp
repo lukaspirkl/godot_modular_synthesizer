@@ -30,7 +30,7 @@ ModularSynthesizerEditorPlugin::ModularSynthesizerEditorPlugin(EditorNode *p_nod
 	modular_synthesizer_editor = memnew(ModularSynthesizerEditor);
 	modular_synthesizer_editor->set_custom_minimum_size(Size2(0, 300) * EDSCALE);
 
-	button = editor->add_bottom_panel_item("Modular Synthesizer" /*TTR("ModularSynthesizer")*/, modular_synthesizer_editor);
+	button = editor->add_bottom_panel_item("Modular Synthesizer", modular_synthesizer_editor);
 	button->hide();
 }
 

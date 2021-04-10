@@ -8,10 +8,22 @@
 class ModularSynthesizer : public AudioStream {
 	GDCLASS(ModularSynthesizer, AudioStream);
 
+	String text_data;
+	float frequency;
+	float volume;
+
 protected:
 	static void _bind_methods();
 
 public:
+	void set_frequency(float f);
+	float get_frequency() const;
+	void set_volume(float f);
+	float get_volume() const;
+
+	void set_text_data(String data);
+	String get_text_data() const;
+
 	virtual Ref<AudioStreamPlayback> instance_playback();
 	virtual String get_stream_name() const;
 

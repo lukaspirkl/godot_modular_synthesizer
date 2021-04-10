@@ -9,8 +9,11 @@
 #include "core/class_db.h"
 #include "src/modular_synthesizer.h"
 
+#include "thirdparty/tonic/src/Tonic.h"
 
 void register_modular_synthesizer_types() {
+	Tonic::setSampleRate(44100);
+
 	ClassDB::register_class<ModularSynthesizer>();
 	ClassDB::register_class<ModularSynthesizerPlayback>();
 #ifdef TOOLS_ENABLED
