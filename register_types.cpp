@@ -14,6 +14,8 @@
 void register_modular_synthesizer_types() {
 	Tonic::setSampleRate(44100);
 
+	ClassDB::register_class<NodeData>();
+	ClassDB::register_class<ConnectionData>();
 	ClassDB::register_class<ModularSynthesizer>();
 	ClassDB::register_class<ModularSynthesizerPlayback>();
 #ifdef TOOLS_ENABLED

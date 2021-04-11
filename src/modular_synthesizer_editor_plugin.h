@@ -9,17 +9,7 @@
 #include "scene/gui/tree.h"
 
 #include "modular_synthesizer.h"
-
-class ModularSynthesizerEditor : public VBoxContainer {
-	GDCLASS(ModularSynthesizerEditor, VBoxContainer);
-
-	Ref<ModularSynthesizer> synth;
-	GraphEdit *graph;
-
-public:
-	void edit(ModularSynthesizer *p_synth);
-	ModularSynthesizerEditor();
-};
+#include "modular_synthesizer_editor.h"
 
 class ModularSynthesizerEditorPlugin : public EditorPlugin {
 	GDCLASS(ModularSynthesizerEditorPlugin, EditorPlugin);

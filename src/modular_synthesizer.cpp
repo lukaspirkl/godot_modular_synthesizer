@@ -2,6 +2,48 @@
 
 using namespace Tonic;
 
+
+void NodeData::_bind_methods()
+{
+	ClassDB::bind_method(D_METHOD("set_position"), &NodeData::set_position);
+	ClassDB::bind_method(D_METHOD("get_position"), &NodeData::get_position);
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "position"), "set_position", "get_position");
+	ClassDB::bind_method(D_METHOD("set_type"), &NodeData::set_type);
+	ClassDB::bind_method(D_METHOD("get_type"), &NodeData::get_type);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "type"), "set_type", "get_type");
+}
+
+
+
+void ConnectionData::_bind_methods()
+{
+	ClassDB::bind_method(D_METHOD("set_from"), &ConnectionData::set_from);
+	ClassDB::bind_method(D_METHOD("get_from"), &ConnectionData::get_from);
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "from"), "set_from", "get_from");
+	ClassDB::bind_method(D_METHOD("set_from_index"), &ConnectionData::set_from_index);
+	ClassDB::bind_method(D_METHOD("get_from_index"), &ConnectionData::get_from_index);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "from_index"), "set_from_index", "get_from_index");
+	ClassDB::bind_method(D_METHOD("set_to"), &ConnectionData::set_to);
+	ClassDB::bind_method(D_METHOD("get_to"), &ConnectionData::get_to);
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "to"), "set_to", "get_to");
+	ClassDB::bind_method(D_METHOD("set_to_index"), &ConnectionData::set_to_index);
+	ClassDB::bind_method(D_METHOD("get_to_index"), &ConnectionData::get_to_index);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "to_index"), "set_to_index", "get_to_index");
+}
+
+ConnectionData::ConnectionData()
+{
+}
+
+ConnectionData::ConnectionData(const String& p_from, int p_from_index, const String& p_to, int p_to_index)
+{
+	from = p_from;
+	from_index = p_from_index;
+	to = p_to;
+	to_index = p_to_index;
+}
+
+
 Ref<AudioStreamPlayback> ModularSynthesizer::instance_playback() {
 
 	Ref<ModularSynthesizerPlayback> playback;
@@ -27,38 +69,20 @@ void ModularSynthesizer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_volume"), &ModularSynthesizer::get_volume);
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "volume"), "set_volume", "get_volume");
 
-	ClassDB::bind_method(D_METHOD("set_text_data"), &ModularSynthesizer::set_text_data);
-	ClassDB::bind_method(D_METHOD("get_text_data"), &ModularSynthesizer::get_text_data);
-	//ADD_PROPERTY(PropertyInfo(Variant::STRING, "text_data", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_text_data", "get_text_data");
-	ADD_PROPERTY(PropertyInfo(Variant::STRING, "text_data"), "set_text_data", "get_text_data");
-}
+	ClassDB::bind_method(D_METHOD("set_nodes"), &ModularSynthesizer::set_nodes);
+	ClassDB::bind_method(D_METHOD("get_nodes"), &ModularSynthesizer::get_nodes);
+	ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "nodes"), "set_nodes", "get_nodes");
 
-void ModularSynthesizer::set_frequency(float f) {
-	frequency = f;
-}
+	ClassDB::bind_method(D_METHOD("set_connections"), &ModularSynthesizer::set_connections);
+	ClassDB::bind_method(D_METHOD("get_connections"), &ModularSynthesizer::get_connections);
+	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "connections"), "set_connections", "get_connections");
 
-float ModularSynthesizer::get_frequency() const {
-	return frequency;
-}
-
-void ModularSynthesizer::set_volume(float f) {
-	volume = f;
-}
-
-float ModularSynthesizer::get_volume() const {
-	return volume;
-}
-
-void ModularSynthesizer::set_text_data(String data) {
-	text_data = data;
-}
-
-String ModularSynthesizer::get_text_data() const {
-	return text_data;
+	ClassDB::bind_method(D_METHOD("set_output"), &ModularSynthesizer::set_output);
+	ClassDB::bind_method(D_METHOD("get_output"), &ModularSynthesizer::get_output);
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "output"), "set_output", "get_output");
 }
 
 ModularSynthesizer::ModularSynthesizer() {
-	text_data = "Default value";
 	frequency = 440.0f;
 	volume = 0.3f;
 }
@@ -103,6 +127,10 @@ void ModularSynthesizerPlayback::start(float p_from_pos) {
 	Generator tone = SineWave().freq(freq) * vol;
 
 	synth.setOutputGen(tone);
+
+	//Dictionary d = generator->get_data();
+	//Variant v = d[1];
+	//NodeData *nd = Object::cast_to<NodeData>(v);
 }
 
 void ModularSynthesizerPlayback::stop() {
@@ -124,9 +152,9 @@ void ModularSynthesizerPlayback::seek(float p_time) {
 	//no seek possible
 }
 
-void ModularSynthesizerPlayback::mix(AudioFrame *p_buffer, float p_rate_scale, int p_frames) {
+void ModularSynthesizerPlayback::mix(AudioFrame* p_buffer, float p_rate_scale, int p_frames) {
 
-	synth.fillBufferOfFloats((float *)p_buffer, p_frames, 2);
+	synth.fillBufferOfFloats((float*)p_buffer, p_frames, 2);
 }
 
 void ModularSynthesizerPlayback::_bind_methods() {

@@ -5,24 +5,71 @@
 
 #include "../thirdparty/tonic/src/Tonic.h"
 
-class ModularSynthesizer : public AudioStream {
-	GDCLASS(ModularSynthesizer, AudioStream);
+class NodeData : public Resource {
+	GDCLASS(NodeData, Resource);
 
-	String text_data;
-	float frequency;
-	float volume;
+	Vector2 position = Vector2(0, 0);
+	int type = -1;
 
 protected:
 	static void _bind_methods();
 
 public:
-	void set_frequency(float f);
-	float get_frequency() const;
-	void set_volume(float f);
-	float get_volume() const;
+	void set_position(Vector2 value) { position = value; }
+	Vector2 get_position() { return position; }
+	void set_type(int value) { type = value; }
+	int get_type() { return type; }
+};
 
-	void set_text_data(String data);
-	String get_text_data() const;
+class ConnectionData : public Resource {
+	GDCLASS(ConnectionData, Resource);
+
+	String from = "";
+	int from_index = 0;
+	String to = "";
+	int to_index = 0;
+
+protected:
+	static void _bind_methods();
+
+public:
+	void set_from(String value) { from = value; }
+	String get_from() { return from; }
+	void set_from_index(int value) { from_index = value; }
+	int get_from_index() { return from_index; }
+	void set_to(String value) { to = value; }
+	String get_to() { return to; }
+	void set_to_index(int value) { to_index = value; }
+	int get_to_index() { return to_index; }
+
+	ConnectionData();
+	ConnectionData(const String& p_from, int p_from_index, const String& p_to, int p_to_index);
+};
+
+class ModularSynthesizer : public AudioStream {
+	GDCLASS(ModularSynthesizer, AudioStream);
+
+	float frequency;
+	float volume;
+
+	Dictionary nodes;
+	Array connections;
+	Ref<NodeData> output;
+
+protected:
+	static void _bind_methods();
+
+public:
+	void set_frequency(float f) { frequency = f; }
+	float get_frequency() const { return frequency; }
+	void set_volume(float f) { volume = f; }
+	float get_volume() const { return volume; }
+	void set_nodes(Dictionary value) { nodes = value; }
+	Dictionary get_nodes() const { return nodes; }
+	void set_connections(Array value) { connections = value; }
+	Array get_connections() { return connections; }
+	void set_output(Ref<NodeData> value) { output = value; }
+	Ref<NodeData> get_output() { return output; }
 
 	virtual Ref<AudioStreamPlayback> instance_playback();
 	virtual String get_stream_name() const;
@@ -37,7 +84,7 @@ class ModularSynthesizerPlayback : public AudioStreamPlayback {
 	friend class ModularSynthesizer;
 	bool active;
 	float mixed;
-	ModularSynthesizer *generator;
+	ModularSynthesizer* generator;
 	uint64_t pos;
 	Tonic::Synth synth;
 
@@ -54,7 +101,7 @@ public:
 	virtual float get_playback_position() const;
 	virtual void seek(float p_time);
 
-	virtual void mix(AudioFrame *p_buffer, float p_rate_scale, int p_frames);
+	virtual void mix(AudioFrame* p_buffer, float p_rate_scale, int p_frames);
 
 	ModularSynthesizerPlayback();
 };
