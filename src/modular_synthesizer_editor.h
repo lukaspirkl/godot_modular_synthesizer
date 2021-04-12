@@ -33,14 +33,15 @@ public:
 };
 
 
+
 class SynthNode : public GraphNode {
 	GDCLASS(SynthNode, GraphNode);
-
-	Ref<NodeData> data;
 
 	void _offset_changed();
 
 protected:
+	Ref<NodeData> data;
+
 	static void _bind_methods();
 	void _notification(int p_what);
 
@@ -48,12 +49,22 @@ public:
 	SynthNode(Ref<NodeData> p_data);
 };
 
+
+
 class ConstantGeneratorNode : public SynthNode {
 	GDCLASS(ConstantGeneratorNode, SynthNode);
+
+	void _value_changed(double value);
+
+protected:
+	static void _bind_methods();
 
 public:
 	ConstantGeneratorNode(Ref<NodeData> p_data);
 };
+
+
+
 
 class OutputNode : public SynthNode {
 	GDCLASS(OutputNode, SynthNode);

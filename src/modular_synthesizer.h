@@ -8,8 +8,16 @@
 class NodeData : public Resource {
 	GDCLASS(NodeData, Resource);
 
+public:
+	enum NodeType {
+		NODE_SPECIAL = 0,
+		NODE_CONSTANT = 1,
+	};
+
+private:
 	Vector2 position = Vector2(0, 0);
-	int type = -1;
+	NodeType type = NODE_SPECIAL;
+	Dictionary params;
 
 protected:
 	static void _bind_methods();
@@ -17,9 +25,15 @@ protected:
 public:
 	void set_position(Vector2 value) { position = value; }
 	Vector2 get_position() { return position; }
-	void set_type(int value) { type = value; }
-	int get_type() { return type; }
+	void set_type(NodeType value) { type = value; }
+	NodeType get_type() { return type; }
+	void set_params(Dictionary value) { params = value; }
+	Dictionary get_params() { return params; }
 };
+
+VARIANT_ENUM_CAST(NodeData::NodeType);
+
+
 
 class ConnectionData : public Resource {
 	GDCLASS(ConnectionData, Resource);
@@ -49,7 +63,6 @@ public:
 class ModularSynthesizer : public AudioStream {
 	GDCLASS(ModularSynthesizer, AudioStream);
 
-	float frequency;
 	float volume;
 
 	Dictionary nodes;
@@ -60,8 +73,6 @@ protected:
 	static void _bind_methods();
 
 public:
-	void set_frequency(float f) { frequency = f; }
-	float get_frequency() const { return frequency; }
 	void set_volume(float f) { volume = f; }
 	float get_volume() const { return volume; }
 	void set_nodes(Dictionary value) { nodes = value; }
@@ -84,7 +95,7 @@ class ModularSynthesizerPlayback : public AudioStreamPlayback {
 	friend class ModularSynthesizer;
 	bool active;
 	float mixed;
-	ModularSynthesizer* generator;
+	ModularSynthesizer* res;
 	uint64_t pos;
 	Tonic::Synth synth;
 

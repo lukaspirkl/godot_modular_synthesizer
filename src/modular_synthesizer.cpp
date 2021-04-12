@@ -8,9 +8,16 @@ void NodeData::_bind_methods()
 	ClassDB::bind_method(D_METHOD("set_position"), &NodeData::set_position);
 	ClassDB::bind_method(D_METHOD("get_position"), &NodeData::get_position);
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "position"), "set_position", "get_position");
+
 	ClassDB::bind_method(D_METHOD("set_type"), &NodeData::set_type);
 	ClassDB::bind_method(D_METHOD("get_type"), &NodeData::get_type);
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "type"), "set_type", "get_type");
+	BIND_ENUM_CONSTANT(NODE_SPECIAL);
+	BIND_ENUM_CONSTANT(NODE_CONSTANT);
+
+	ClassDB::bind_method(D_METHOD("set_params"), &NodeData::set_params);
+	ClassDB::bind_method(D_METHOD("get_params"), &NodeData::get_params);
+	ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "params"), "set_params", "get_params");
 }
 
 
@@ -48,7 +55,7 @@ Ref<AudioStreamPlayback> ModularSynthesizer::instance_playback() {
 
 	Ref<ModularSynthesizerPlayback> playback;
 	playback.instance();
-	playback->generator = this;
+	playback->res = this;
 	return playback;
 }
 String ModularSynthesizer::get_stream_name() const {
@@ -61,10 +68,6 @@ float ModularSynthesizer::get_length() const {
 }
 
 void ModularSynthesizer::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_frequency"), &ModularSynthesizer::set_frequency);
-	ClassDB::bind_method(D_METHOD("get_frequency"), &ModularSynthesizer::get_frequency);
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "frequency"), "set_frequency", "get_frequency");
-
 	ClassDB::bind_method(D_METHOD("set_volume"), &ModularSynthesizer::set_volume);
 	ClassDB::bind_method(D_METHOD("get_volume"), &ModularSynthesizer::get_volume);
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "volume"), "set_volume", "get_volume");
@@ -83,7 +86,6 @@ void ModularSynthesizer::_bind_methods() {
 }
 
 ModularSynthesizer::ModularSynthesizer() {
-	frequency = 440.0f;
 	volume = 0.3f;
 }
 
@@ -122,15 +124,48 @@ void ModularSynthesizerPlayback::start(float p_from_pos) {
 
 	//Generator output = ((tone * env) >> filter >> delay) * 0.3;
 
-	FixedValue freq = FixedValue(generator->get_frequency());
-	FixedValue vol = FixedValue(generator->get_volume());
-	Generator tone = SineWave().freq(freq) * vol;
+	Generator output = FixedValue(0);
+
+	Map<String, Generator> generators;
+	Dictionary nodes = res->get_nodes();
+	for (const Variant* key = nodes.next(); key != NULL; key = nodes.next(key))
+	{
+		Ref<NodeData> data = nodes[*key];
+		switch (data->get_type())
+		{
+		case NodeData::NodeType::NODE_CONSTANT:
+			generators.insert(*key, FixedValue(data->get_params()["value"]));
+			break;
+		default:
+			continue;
+		}
+	}
+
+	for (size_t i = 0; i < res->get_connections().size(); i++)
+	{
+		Ref<ConnectionData> c = res->get_connections().get(i);
+		
+		// Find signal destination
+		Generator destination = (c->get_to() == "OutputNode") ? output : generators[c->get_to()];
+		
+		// Add sum signal source with destinatioln
+		destination = destination + generators[c->get_from()];
+		
+		// Save new generator into destination
+		if (c->get_to() == "OutputNode")
+		{
+			output = destination;
+		}
+		else
+		{
+			generators[c->get_to()] = destination;
+		}
+	}
+
+	Generator vol = FixedValue(res->get_volume());
+	Generator tone = SineWave().freq(output) * vol;
 
 	synth.setOutputGen(tone);
-
-	//Dictionary d = generator->get_data();
-	//Variant v = d[1];
-	//NodeData *nd = Object::cast_to<NodeData>(v);
 }
 
 void ModularSynthesizerPlayback::stop() {
@@ -162,7 +197,7 @@ void ModularSynthesizerPlayback::_bind_methods() {
 
 ModularSynthesizerPlayback::ModularSynthesizerPlayback() {
 
-	generator = NULL;
+	res = NULL;
 	active = false;
 	mixed = 0;
 	pos = 0;

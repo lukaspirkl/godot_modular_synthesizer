@@ -24,7 +24,7 @@ ModularSynthesizerEditor::ModularSynthesizerEditor() {
 	add_child(graph);
 
 	context_menu = memnew(PopupMenu);
-	context_menu->add_item("Constant", 0);
+	context_menu->add_item("Constant", NodeData::NodeType::NODE_CONSTANT);
 	context_menu->add_separator();
 	context_menu->add_item("Sine Wave", 1);
 	context_menu->set_item_disabled(2, true);
@@ -55,7 +55,17 @@ void ModularSynthesizerEditor::edit(ModularSynthesizer* p_synth) {
 		Dictionary nodes = synth->get_nodes();
 		for (const Variant *key = nodes.next(); key != NULL; key = nodes.next(key))
 		{
-			ConstantGeneratorNode* node = memnew(ConstantGeneratorNode(nodes[*key]));
+			Ref<NodeData> data = nodes[*key];
+			SynthNode* node = NULL;
+			switch (data->get_type())
+			{
+			case NodeData::NodeType::NODE_CONSTANT:
+				node = memnew(ConstantGeneratorNode(data));
+				break;
+			default:
+				continue;
+			}
+			
 			node->set_name(*key);
 			graph->add_child(node);
 		}
@@ -93,15 +103,26 @@ void ModularSynthesizerEditor::_open_context_menu(const Vector2& p_position)
 
 void ModularSynthesizerEditor::_add_node(int p_id)
 {
+	NodeData::NodeType type = (NodeData::NodeType)p_id;
+
 	Point2 position = graph->get_scroll_ofs();
 	position += new_node_pos;
 
 	Ref<NodeData> data = memnew(NodeData);
 	data->set_position(position);
+	data->set_type(type);
 
-	ConstantGeneratorNode* node = memnew(ConstantGeneratorNode(data));
-	graph->add_child(node);
-
+	SynthNode* node = NULL;
+	switch (type)
+	{
+	case NodeData::NODE_CONSTANT:
+		node = memnew(ConstantGeneratorNode(data));
+		break;
+	default:
+		return;
+	}
+	
+	graph->add_child(node); // This will also generate and set unique name
 	synth->get_nodes()[node->get_name()] = Variant(data);
 }
 
@@ -197,6 +218,15 @@ SynthNode::SynthNode(Ref<NodeData> p_data)
 
 
 
+void ConstantGeneratorNode::_value_changed(double value)
+{
+	data->get_params()["value"] = value;
+}
+
+void ConstantGeneratorNode::_bind_methods()
+{
+	ClassDB::bind_method("_value_changed", &ConstantGeneratorNode::_value_changed);
+}
 
 ConstantGeneratorNode::ConstantGeneratorNode(Ref<NodeData> p_data)
 	: SynthNode(p_data)
@@ -206,9 +236,14 @@ ConstantGeneratorNode::ConstantGeneratorNode(Ref<NodeData> p_data)
 	SpinBox* spin_box = memnew(SpinBox);
 	spin_box->set_allow_greater(true);
 	spin_box->set_allow_lesser(true);
+	spin_box->set_value(data->get_params()["value"]);
+	spin_box->connect("value_changed", this, "_value_changed");
 	add_child(spin_box);
 	set_slot(0, false, 10, Color(1, 1, 1), true, 10, Color(1, 1, 1));
 }
+
+
+
 
 OutputNode::OutputNode(Ref<NodeData> p_data)
 	: SynthNode(p_data)
