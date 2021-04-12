@@ -7,6 +7,7 @@ void ModularSynthesizerEditor::_bind_methods()
 	ClassDB::bind_method("_add_node", &ModularSynthesizerEditor::_add_node);
 	ClassDB::bind_method("_connection_request", &ModularSynthesizerEditor::_connection_request);
 	ClassDB::bind_method("_disconnection_request", &ModularSynthesizerEditor::_disconnection_request);
+	ClassDB::bind_method("_delete_nodes_request", &ModularSynthesizerEditor::_delete_nodes_request);
 }
 
 ModularSynthesizerEditor::ModularSynthesizerEditor() {
@@ -19,6 +20,7 @@ ModularSynthesizerEditor::ModularSynthesizerEditor() {
 	graph->connect("popup_request", this, "_open_context_menu");
 	graph->connect("connection_request", this, "_connection_request");
 	graph->connect("disconnection_request", this, "_disconnection_request");
+	graph->connect("delete_nodes_request", this, "_delete_nodes_request");
 	add_child(graph);
 
 	context_menu = memnew(PopupMenu);
@@ -38,11 +40,14 @@ void ModularSynthesizerEditor::edit(ModularSynthesizer* p_synth) {
 	if (p_synth) {
 		synth = Ref<ModularSynthesizer>(p_synth);
 
-		for (int i = 0; i < graph->get_child_count(); i++) {
+		graph->clear_connections();
 
-			if (Object::cast_to<GraphNode>(graph->get_child(i))) {
-				Node* node = graph->get_child(i);
-				node->queue_delete();
+		for (int i = 0; i < graph->get_child_count(); i++) 
+		{
+			Node* node = graph->get_child(i);
+			if (Object::cast_to<GraphNode>(node)) {
+				graph->remove_child(node);
+				memdelete(node);
 				i--;
 			}
 		}
@@ -55,14 +60,6 @@ void ModularSynthesizerEditor::edit(ModularSynthesizer* p_synth) {
 			graph->add_child(node);
 		}
 
-		graph->clear_connections();
-
-		for (size_t i = 0; i < synth->get_connections().size(); i++)
-		{
-			Ref<ConnectionData> c = synth->get_connections().get(i);
-			graph->connect_node(c->get_from(), c->get_from_index(), c->get_to(), c->get_to_index());
-		}
-
 		if (synth->get_output() == NULL)
 		{
 			Ref<NodeData> output_data = memnew(NodeData);
@@ -71,6 +68,12 @@ void ModularSynthesizerEditor::edit(ModularSynthesizer* p_synth) {
 		}
 		OutputNode* output = memnew(OutputNode(synth->get_output()));
 		graph->add_child(output);
+
+		for (size_t i = 0; i < synth->get_connections().size(); i++)
+		{
+			Ref<ConnectionData> c = synth->get_connections().get(i);
+			graph->connect_node(c->get_from(), c->get_from_index(), c->get_to(), c->get_to_index());
+		}
 	}
 	else {
 		synth.unref();
@@ -124,8 +127,44 @@ void ModularSynthesizerEditor::_disconnection_request(const String& p_from, int 
 	}
 }
 
+void ModularSynthesizerEditor::_delete_nodes_request()
+{
+	for (int i = 0; i < graph->get_child_count(); i++)
+	{
+		if (Object::cast_to<OutputNode>(graph->get_child(i)) != NULL)
+		{
+			// OutputNode cannot be deleted
+			continue;
+		}
 
+		GraphNode* gn = Object::cast_to<GraphNode>(graph->get_child(i));
+		if (gn && gn->is_selected()) 
+		{
+			for (int i = synth->get_connections().size() - 1; i >= 0; i--)
+			{
+				Ref<ConnectionData> c = synth->get_connections().get(i);
+				if (c->get_from() == gn->get_name() || c->get_to() == gn->get_name())
+				{
+					synth->get_connections().remove(i);
+				}
+			}
 
+			List<GraphEdit::Connection> connections;
+			graph->get_connection_list(&connections);
+			for (List<GraphEdit::Connection>::Element* E = connections.front(); E; E = E->next()) {
+				const GraphEdit::Connection& con = E->get();
+				if (con.from == gn->get_name() || con.to == gn->get_name())
+				{
+					graph->disconnect_node(con.from, con.from_port, con.to, con.to_port);
+				}
+			}
+			
+			synth->get_nodes().erase(gn->get_name());
+			graph->remove_child(gn);
+			memdelete(gn);
+		}
+	}
+}
 
 
 
@@ -137,7 +176,6 @@ void SynthNode::_offset_changed()
 
 void SynthNode::_bind_methods()
 {
-	ClassDB::bind_method("remove", &SynthNode::remove);
 	ClassDB::bind_method("_offset_changed", &SynthNode::_offset_changed);
 }
 
@@ -145,7 +183,6 @@ void SynthNode::_notification(int p_what)
 {
 	if (p_what == NOTIFICATION_READY)
 	{
-		connect("close_request", this, "remove");
 		connect("offset_changed", this, "_offset_changed");
 	}
 }
@@ -153,13 +190,7 @@ void SynthNode::_notification(int p_what)
 SynthNode::SynthNode(Ref<NodeData> p_data)
 	: data(p_data)
 {
-	set_show_close_button(true);
 	set_offset(p_data->get_position());
-}
-
-void SynthNode::remove()
-{
-	queue_delete();
 }
 
 
