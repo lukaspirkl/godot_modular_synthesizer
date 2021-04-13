@@ -26,14 +26,33 @@ ModularSynthesizerEditor::ModularSynthesizerEditor() {
 	context_menu = memnew(PopupMenu);
 	context_menu->add_item("Constant", NodeData::NodeType::NODE_CONSTANT);
 	context_menu->add_separator();
-	context_menu->add_item("Sine Wave", 1);
-	context_menu->set_item_disabled(2, true);
-	context_menu->add_item("Square Wave", 2);
+	context_menu->add_item("Sine Wave", NodeData::NodeType::NODE_SINE_WAVE);
+	context_menu->add_item("Square Wave", 1);
 	context_menu->set_item_disabled(3, true);
-	context_menu->add_item("Triangle Wave", 3);
+	context_menu->add_item("Triangle Wave", 1);
 	context_menu->set_item_disabled(4, true);
+	context_menu->add_separator();
+	context_menu->add_item("Add", NodeData::NodeType::NODE_ADD);
+	context_menu->add_item("Multiply", NodeData::NodeType::NODE_MULTIPLY);
 	context_menu->connect("id_pressed", this, "_add_node");
 	graph->add_child(context_menu);
+}
+
+SynthNode* ModularSynthesizerEditor::_create_node(Ref<NodeData> p_data)
+{
+	switch (p_data->get_type())
+	{
+	case NodeData::NodeType::NODE_CONSTANT:
+		return memnew(ConstantGeneratorNode(p_data));
+	case NodeData::NodeType::NODE_SINE_WAVE:
+		return memnew(SineWaveGeneratorNode(p_data));
+	case NodeData::NodeType::NODE_ADD:
+		return memnew(AddNode(p_data));
+	case NodeData::NodeType::NODE_MULTIPLY:
+		return memnew(MultiplyNode(p_data));
+	default:
+		return NULL;
+	}
 }
 
 void ModularSynthesizerEditor::edit(ModularSynthesizer* p_synth) {
@@ -55,17 +74,7 @@ void ModularSynthesizerEditor::edit(ModularSynthesizer* p_synth) {
 		Dictionary nodes = synth->get_nodes();
 		for (const Variant *key = nodes.next(); key != NULL; key = nodes.next(key))
 		{
-			Ref<NodeData> data = nodes[*key];
-			SynthNode* node = NULL;
-			switch (data->get_type())
-			{
-			case NodeData::NodeType::NODE_CONSTANT:
-				node = memnew(ConstantGeneratorNode(data));
-				break;
-			default:
-				continue;
-			}
-			
+			SynthNode* node = _create_node(nodes[*key]);	
 			node->set_name(*key);
 			graph->add_child(node);
 		}
@@ -111,17 +120,7 @@ void ModularSynthesizerEditor::_add_node(int p_id)
 	Ref<NodeData> data = memnew(NodeData);
 	data->set_position(position);
 	data->set_type(type);
-
-	SynthNode* node = NULL;
-	switch (type)
-	{
-	case NodeData::NODE_CONSTANT:
-		node = memnew(ConstantGeneratorNode(data));
-		break;
-	default:
-		return;
-	}
-	
+	SynthNode* node = _create_node(data);
 	graph->add_child(node); // This will also generate and set unique name
 	synth->get_nodes()[node->get_name()] = Variant(data);
 }
@@ -195,9 +194,15 @@ void SynthNode::_offset_changed()
 	data->set_position(get_offset());
 }
 
+void SynthNode::_update_node_size_text(String p_text)
+{
+	set_size(Vector2(1, 1)); // shrink if text is smaller
+}
+
 void SynthNode::_bind_methods()
 {
 	ClassDB::bind_method("_offset_changed", &SynthNode::_offset_changed);
+	ClassDB::bind_method("_update_node_size_text", &SynthNode::_update_node_size_text);
 }
 
 void SynthNode::_notification(int p_what)
@@ -238,9 +243,54 @@ ConstantGeneratorNode::ConstantGeneratorNode(Ref<NodeData> p_data)
 	spin_box->set_allow_lesser(true);
 	spin_box->set_value(data->get_params()["value"]);
 	spin_box->connect("value_changed", this, "_value_changed");
+	spin_box->get_line_edit()->set_expand_to_text_length(true);
+	spin_box->get_line_edit()->connect("text_changed", this, "_update_node_size_text");
 	add_child(spin_box);
 	set_slot(0, false, 10, Color(1, 1, 1), true, 10, Color(1, 1, 1));
 }
+
+
+
+
+
+void SineWaveGeneratorNode::_freq_changed(double value)
+{
+	data->get_params()["freq"] = value;
+}
+
+void SineWaveGeneratorNode::_bind_methods()
+{
+	ClassDB::bind_method("_freq_changed", &SineWaveGeneratorNode::_freq_changed);
+}
+
+SineWaveGeneratorNode::SineWaveGeneratorNode(Ref<NodeData> p_data)
+	: SynthNode(p_data)
+{
+	set_title("Sine Wave");
+	HBoxContainer* hb = memnew(HBoxContainer);
+	add_child(hb);
+	
+	Label* label = memnew(Label);
+	label->set_text("Freq");
+	hb->add_child(label);
+
+	SpinBox* spin_box = memnew(SpinBox);
+	spin_box->set_allow_greater(true);
+	spin_box->set_allow_lesser(true);
+	spin_box->set_suffix("hz");
+	if (!data->get_params().has("freq"))
+	{
+		data->get_params()["freq"] = (double)440.0;
+	}
+	spin_box->set_value(data->get_params()["freq"]);
+	spin_box->connect("value_changed", this, "_freq_changed");
+	spin_box->get_line_edit()->set_expand_to_text_length(true);
+	spin_box->get_line_edit()->connect("text_changed", this, "_update_node_size_text");
+	hb->add_child(spin_box);
+
+	set_slot(0, true, 10, Color(1, 1, 1), true, 10, Color(1, 1, 1));
+}
+
 
 
 
@@ -254,4 +304,37 @@ OutputNode::OutputNode(Ref<NodeData> p_data)
 	label->set_text("Output");
 	add_child(label);
 	set_slot(0, true, 10, Color(1, 1, 1), false, 10, Color(1, 1, 1));
+}
+
+
+
+AddNode::AddNode(Ref<NodeData> p_data)
+	: SynthNode(p_data)
+{
+	set_title("Add");
+
+	Label* a = memnew(Label);
+	a->set_text("A");
+	add_child(a);
+	Label* b = memnew(Label);
+	b->set_text("B");
+	add_child(b);
+	set_slot(0, true, 10, Color(1, 1, 1), true, 10, Color(1, 1, 1));
+	set_slot(1, true, 10, Color(1, 1, 1), false, 10, Color(1, 1, 1));
+}
+
+
+MultiplyNode::MultiplyNode(Ref<NodeData> p_data)
+	: SynthNode(p_data)
+{
+	set_title("Multiply");
+
+	Label* a = memnew(Label);
+	a->set_text("A");
+	add_child(a);
+	Label* b = memnew(Label);
+	b->set_text("B");
+	add_child(b);
+	set_slot(0, true, 10, Color(1, 1, 1), true, 10, Color(1, 1, 1));
+	set_slot(1, true, 10, Color(1, 1, 1), false, 10, Color(1, 1, 1));
 }

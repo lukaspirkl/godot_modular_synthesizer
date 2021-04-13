@@ -2,7 +2,6 @@
 
 using namespace Tonic;
 
-
 void NodeData::_bind_methods()
 {
 	ClassDB::bind_method(D_METHOD("set_position"), &NodeData::set_position);
@@ -14,6 +13,9 @@ void NodeData::_bind_methods()
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "type"), "set_type", "get_type");
 	BIND_ENUM_CONSTANT(NODE_SPECIAL);
 	BIND_ENUM_CONSTANT(NODE_CONSTANT);
+	BIND_ENUM_CONSTANT(NODE_SINE_WAVE);
+	BIND_ENUM_CONSTANT(NODE_ADD);
+	BIND_ENUM_CONSTANT(NODE_MULTIPLY);
 
 	ClassDB::bind_method(D_METHOD("set_params"), &NodeData::set_params);
 	ClassDB::bind_method(D_METHOD("get_params"), &NodeData::get_params);
@@ -91,6 +93,7 @@ ModularSynthesizer::ModularSynthesizer() {
 
 ////////////////
 
+
 void ModularSynthesizerPlayback::start(float p_from_pos) {
 	active = true;
 	mixed = 0.0;
@@ -124,48 +127,63 @@ void ModularSynthesizerPlayback::start(float p_from_pos) {
 
 	//Generator output = ((tone * env) >> filter >> delay) * 0.3;
 
-	Generator output = FixedValue(0);
+	Generator vol = FixedValue(res->get_volume());
+	String name = _get_node_connected_to("OutputNode", 0);
+	Generator tone = _create_generator(name) * vol;
 
-	Map<String, Generator> generators;
-	Dictionary nodes = res->get_nodes();
-	for (const Variant* key = nodes.next(); key != NULL; key = nodes.next(key))
+	synth.setOutputGen(tone);
+}
+
+Generator ModularSynthesizerPlayback::_create_generator(String name)
+{
+	Ref<NodeData> data = res->get_nodes()[name];
+	switch (data->get_type())
 	{
-		Ref<NodeData> data = nodes[*key];
-		switch (data->get_type())
-		{
-		case NodeData::NodeType::NODE_CONSTANT:
-			generators.insert(*key, FixedValue(data->get_params()["value"]));
-			break;
-		default:
-			continue;
-		}
+	case NodeData::NodeType::NODE_CONSTANT: {
+		return FixedValue(data->get_params()["value"]);
 	}
-
-	for (size_t i = 0; i < res->get_connections().size(); i++)
-	{
-		Ref<ConnectionData> c = res->get_connections().get(i);
-		
-		// Find signal destination
-		Generator destination = (c->get_to() == "OutputNode") ? output : generators[c->get_to()];
-		
-		// Add sum signal source with destinatioln
-		destination = destination + generators[c->get_from()];
-		
-		// Save new generator into destination
-		if (c->get_to() == "OutputNode")
+	case NodeData::NodeType::NODE_SINE_WAVE: {
+		SineWave sine = SineWave();
+		String freqName = _get_node_connected_to(name, 0);
+		if (freqName == "")
 		{
-			output = destination;
+			sine.freq(data->get_params()["freq"]);
 		}
 		else
 		{
-			generators[c->get_to()] = destination;
+			sine.freq(_create_generator(freqName));
+		}
+		return sine;
+	}
+	case NodeData::NodeType::NODE_ADD: {
+		String name_a = _get_node_connected_to(name, 0);
+		String name_b = _get_node_connected_to(name, 1);
+		Generator gen_a = name_a == "" ? FixedValue(0) : _create_generator(name_a);
+		Generator gen_b = name_b == "" ? FixedValue(0) : _create_generator(name_b);
+		return gen_a + gen_b;
+	}
+	case NodeData::NodeType::NODE_MULTIPLY: {
+		String name_a = _get_node_connected_to(name, 0);
+		String name_b = _get_node_connected_to(name, 1);
+		Generator gen_a = name_a == "" ? FixedValue(0) : _create_generator(name_a);
+		Generator gen_b = name_b == "" ? FixedValue(0) : _create_generator(name_b);
+		return gen_a * gen_b;
+	}
+	}
+	return FixedValue(0);
+}
+
+String ModularSynthesizerPlayback::_get_node_connected_to(String name, int index)
+{
+	for (size_t i = 0; i < res->get_connections().size(); i++)
+	{
+		Ref<ConnectionData> c = res->get_connections().get(i);
+		if (c->get_to() == name && c->get_to_index() == index)
+		{
+			return c->get_from();
 		}
 	}
-
-	Generator vol = FixedValue(res->get_volume());
-	Generator tone = SineWave().freq(output) * vol;
-
-	synth.setOutputGen(tone);
+	return "";
 }
 
 void ModularSynthesizerPlayback::stop() {

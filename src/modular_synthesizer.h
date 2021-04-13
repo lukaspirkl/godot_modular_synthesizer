@@ -12,6 +12,9 @@ public:
 	enum NodeType {
 		NODE_SPECIAL = 0,
 		NODE_CONSTANT = 1,
+		NODE_SINE_WAVE = 2,
+		NODE_ADD = 100,
+		NODE_MULTIPLY = 101,
 	};
 
 private:
@@ -98,6 +101,9 @@ class ModularSynthesizerPlayback : public AudioStreamPlayback {
 	ModularSynthesizer* res;
 	uint64_t pos;
 	Tonic::Synth synth;
+
+	String _get_node_connected_to(String name, int index);
+	Tonic::Generator _create_generator(String name);
 
 protected:
 	static void _bind_methods();
