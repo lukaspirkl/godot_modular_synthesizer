@@ -127,6 +127,25 @@ void ModularSynthesizerEditor::_add_node(int p_id)
 
 void ModularSynthesizerEditor::_connection_request(const String& p_from, int p_from_index, const String& p_to, int p_to_index)
 {
+	for (int i = synth->get_connections().size() - 1; i >= 0; i--)
+	{
+		Ref<ConnectionData> c = synth->get_connections().get(i);
+		
+		// Allow only single connection to each input
+		if (c->get_to() == p_to && c->get_to_index() == p_to_index)
+		{
+			synth->get_connections().remove(i);
+			graph->disconnect_node(c->get_from(), c->get_from_index(), p_to, p_to_index);
+		}
+
+		// Allow only single connection to each output
+		if (c->get_from() == p_from && c->get_from_index() == p_from_index)
+		{
+			synth->get_connections().remove(i);
+			graph->disconnect_node(p_from, p_from_index, c->get_to(), c->get_to_index());
+		}
+	}
+
 	graph->connect_node(p_from, p_from_index, p_to, p_to_index);
 	Ref<ConnectionData> c = memnew(ConnectionData(p_from, p_from_index, p_to, p_to_index));
 	synth->get_connections().append(c);
