@@ -1,12 +1,14 @@
 Import('env')
 
-env['no_import_lib'] = 1
-
 module_env = env.Clone()
 
-module_env .add_source_files(env.modules_sources, "*.cpp")
-module_env .add_source_files(env.modules_sources, "src/*.cpp")
-module_env .add_source_files(env.modules_sources, "thirdparty/tonic/src/Tonic/*.cpp")
+module_env.add_source_files(env.modules_sources, "register_types.cpp")
+module_env.add_source_files(env.modules_sources, "src/*.cpp")
+module_env.add_source_files(env.modules_sources, "thirdparty/tonic/src/Tonic/*.cpp")
+
+if env["tools"]:
+    module_env.add_source_files(env.modules_sources, "src/editor/*.cpp")
+    module_env.add_source_files(env.modules_sources, "src/editor/nodes/*.cpp")
 
 if env["platform"] == "windows":
     # ignore 'warning C4068: unknown pragma' as '#pragma mark' is used in Tonic

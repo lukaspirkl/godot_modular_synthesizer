@@ -2,13 +2,8 @@
 
 #include "editor/editor_node.h"
 #include "editor/editor_plugin.h"
-#include "editor/property_editor.h"
 #include "scene/gui/button.h"
-#include "scene/gui/graph_edit.h"
-#include "scene/gui/popup.h"
-#include "scene/gui/tree.h"
 
-#include "modular_synthesizer.h"
 #include "modular_synthesizer_editor.h"
 
 class ModularSynthesizerEditorPlugin : public EditorPlugin {
