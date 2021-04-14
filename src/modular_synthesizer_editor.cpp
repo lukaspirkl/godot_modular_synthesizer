@@ -91,7 +91,7 @@ void ModularSynthesizerEditor::edit(ModularSynthesizer* p_synth) {
 		for (size_t i = 0; i < synth->get_connections().size(); i++)
 		{
 			Ref<ConnectionData> c = synth->get_connections().get(i);
-			graph->connect_node(c->get_from(), c->get_from_index(), c->get_to(), c->get_to_index());
+			_connect_node(c->get_from(), c->get_from_index(), c->get_to(), c->get_to_index());
 		}
 	}
 	else {
@@ -135,25 +135,25 @@ void ModularSynthesizerEditor::_connection_request(const String& p_from, int p_f
 		if (c->get_to() == p_to && c->get_to_index() == p_to_index)
 		{
 			synth->get_connections().remove(i);
-			graph->disconnect_node(c->get_from(), c->get_from_index(), p_to, p_to_index);
+			_disconnect_node(c->get_from(), c->get_from_index(), p_to, p_to_index);
 		}
 
 		// Allow only single connection to each output
 		if (c->get_from() == p_from && c->get_from_index() == p_from_index)
 		{
 			synth->get_connections().remove(i);
-			graph->disconnect_node(p_from, p_from_index, c->get_to(), c->get_to_index());
+			_disconnect_node(p_from, p_from_index, c->get_to(), c->get_to_index());
 		}
 	}
 
-	graph->connect_node(p_from, p_from_index, p_to, p_to_index);
 	Ref<ConnectionData> c = memnew(ConnectionData(p_from, p_from_index, p_to, p_to_index));
 	synth->get_connections().append(c);
+	_connect_node(p_from, p_from_index, p_to, p_to_index);
 }
 
 void ModularSynthesizerEditor::_disconnection_request(const String& p_from, int p_from_index, const String& p_to, int p_to_index)
 {
-	graph->disconnect_node(p_from, p_from_index, p_to, p_to_index);
+	_disconnect_node(p_from, p_from_index, p_to, p_to_index);
 	for (size_t i = 0; i < synth->get_connections().size(); i++)
 	{
 		Ref<ConnectionData> c = synth->get_connections().get(i);
@@ -185,16 +185,7 @@ void ModularSynthesizerEditor::_delete_nodes_request()
 				if (c->get_from() == gn->get_name() || c->get_to() == gn->get_name())
 				{
 					synth->get_connections().remove(i);
-				}
-			}
-
-			List<GraphEdit::Connection> connections;
-			graph->get_connection_list(&connections);
-			for (List<GraphEdit::Connection>::Element* E = connections.front(); E; E = E->next()) {
-				const GraphEdit::Connection& con = E->get();
-				if (con.from == gn->get_name() || con.to == gn->get_name())
-				{
-					graph->disconnect_node(con.from, con.from_port, con.to, con.to_port);
+					_disconnect_node(c->get_from(), c->get_from_index(), c->get_to(), c->get_to_index());
 				}
 			}
 			
@@ -203,6 +194,20 @@ void ModularSynthesizerEditor::_delete_nodes_request()
 			memdelete(gn);
 		}
 	}
+}
+
+void ModularSynthesizerEditor::_connect_node(const String& p_from, int p_from_port, const String& p_to, int p_to_port)
+{
+	Object::cast_to<SynthNode>(graph->get_node(p_from))->output_connected(p_from_port);
+	Object::cast_to<SynthNode>(graph->get_node(p_to))->input_connected(p_to_port);
+	graph->connect_node(p_from, p_from_port, p_to, p_to_port);
+}
+
+void ModularSynthesizerEditor::_disconnect_node(const String& p_from, int p_from_port, const String& p_to, int p_to_port)
+{
+	Object::cast_to<SynthNode>(graph->get_node(p_from))->output_disconnected(p_from_port);
+	Object::cast_to<SynthNode>(graph->get_node(p_to))->input_disconnected(p_to_port);
+	graph->disconnect_node(p_from, p_from_port, p_to, p_to_port);
 }
 
 
@@ -215,7 +220,12 @@ void SynthNode::_offset_changed()
 
 void SynthNode::_update_node_size_text(String p_text)
 {
-	set_size(Vector2(1, 1)); // shrink if text is smaller
+	_shrink_size();
+}
+
+void SynthNode::_shrink_size()
+{
+	set_size(Vector2(1, 1));
 }
 
 void SynthNode::_bind_methods()
@@ -282,6 +292,18 @@ void SineWaveGeneratorNode::_bind_methods()
 	ClassDB::bind_method("_freq_changed", &SineWaveGeneratorNode::_freq_changed);
 }
 
+void SineWaveGeneratorNode::input_connected(int p_index)
+{
+	freq->set_visible(false);
+	_shrink_size();
+}
+
+void SineWaveGeneratorNode::input_disconnected(int p_index)
+{
+	freq->set_visible(true);
+	_shrink_size();
+}
+
 SineWaveGeneratorNode::SineWaveGeneratorNode(Ref<NodeData> p_data)
 	: SynthNode(p_data)
 {
@@ -293,19 +315,20 @@ SineWaveGeneratorNode::SineWaveGeneratorNode(Ref<NodeData> p_data)
 	label->set_text("Freq");
 	hb->add_child(label);
 
-	SpinBox* spin_box = memnew(SpinBox);
-	spin_box->set_allow_greater(true);
-	spin_box->set_allow_lesser(true);
-	spin_box->set_suffix("hz");
+	freq = memnew(SpinBox);
+	freq->set_allow_greater(true);
+	freq->set_allow_lesser(true);
+	freq->set_step(0.001);
+	freq->set_suffix("hz");
 	if (!data->get_params().has("freq"))
 	{
 		data->get_params()["freq"] = (double)440.0;
 	}
-	spin_box->set_value(data->get_params()["freq"]);
-	spin_box->connect("value_changed", this, "_freq_changed");
-	spin_box->get_line_edit()->set_expand_to_text_length(true);
-	spin_box->get_line_edit()->connect("text_changed", this, "_update_node_size_text");
-	hb->add_child(spin_box);
+	freq->set_value(data->get_params()["freq"]);
+	freq->connect("value_changed", this, "_freq_changed");
+	freq->get_line_edit()->set_expand_to_text_length(true);
+	freq->get_line_edit()->connect("text_changed", this, "_update_node_size_text");
+	hb->add_child(freq);
 
 	set_slot(0, true, 10, Color(1, 1, 1), true, 10, Color(1, 1, 1));
 }
@@ -327,7 +350,37 @@ OutputNode::OutputNode(Ref<NodeData> p_data)
 
 
 
-AddNode::AddNode(Ref<NodeData> p_data)
+
+
+void MergeNode::_value_changed(double value)
+{
+	data->get_params()["value"] = value;
+}
+
+void MergeNode::_bind_methods()
+{
+	ClassDB::bind_method("_value_changed", &MergeNode::_value_changed);
+}
+
+void MergeNode::input_connected(int p_index)
+{
+	if (p_index == 1)
+	{
+		value->set_visible(false);
+		_shrink_size();
+	}
+}
+
+void MergeNode::input_disconnected(int p_index)
+{
+	if (p_index == 1)
+	{
+		value->set_visible(true);
+		_shrink_size();
+	}
+}
+
+MergeNode::MergeNode(Ref<NodeData> p_data)
 	: SynthNode(p_data)
 {
 	set_title("Add");
@@ -335,25 +388,39 @@ AddNode::AddNode(Ref<NodeData> p_data)
 	Label* a = memnew(Label);
 	a->set_text("A");
 	add_child(a);
-	Label* b = memnew(Label);
-	b->set_text("B");
-	add_child(b);
+	
+	HBoxContainer* hb = memnew(HBoxContainer);
+	add_child(hb);
+	Label* label = memnew(Label);
+	label->set_text("B");
+	hb->add_child(label);
+	value = memnew(SpinBox);
+	value->set_allow_greater(true);
+	value->set_allow_lesser(true);
+	value->set_step(0.001);
+	if (!data->get_params().has("value"))
+	{
+		data->get_params()["value"] = (double)0;
+	}
+	value->set_value(data->get_params()["value"]);
+	value->connect("value_changed", this, "_value_changed");
+	value->get_line_edit()->set_expand_to_text_length(true);
+	value->get_line_edit()->connect("text_changed", this, "_update_node_size_text");
+	hb->add_child(value);
+
 	set_slot(0, true, 10, Color(1, 1, 1), true, 10, Color(1, 1, 1));
 	set_slot(1, true, 10, Color(1, 1, 1), false, 10, Color(1, 1, 1));
 }
 
 
 MultiplyNode::MultiplyNode(Ref<NodeData> p_data)
-	: SynthNode(p_data)
+	: MergeNode(p_data)
 {
 	set_title("Multiply");
+}
 
-	Label* a = memnew(Label);
-	a->set_text("A");
-	add_child(a);
-	Label* b = memnew(Label);
-	b->set_text("B");
-	add_child(b);
-	set_slot(0, true, 10, Color(1, 1, 1), true, 10, Color(1, 1, 1));
-	set_slot(1, true, 10, Color(1, 1, 1), false, 10, Color(1, 1, 1));
+AddNode::AddNode(Ref<NodeData> p_data)
+	: MergeNode(p_data)
+{
+	set_title("Add");
 }

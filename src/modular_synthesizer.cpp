@@ -159,14 +159,14 @@ Generator ModularSynthesizerPlayback::_create_generator(String name)
 		String name_a = _get_node_connected_to(name, 0);
 		String name_b = _get_node_connected_to(name, 1);
 		Generator gen_a = name_a == "" ? FixedValue(0) : _create_generator(name_a);
-		Generator gen_b = name_b == "" ? FixedValue(0) : _create_generator(name_b);
+		Generator gen_b = name_b == "" ? FixedValue(data->get_params()["value"]) : _create_generator(name_b);
 		return gen_a + gen_b;
 	}
 	case NodeData::NodeType::NODE_MULTIPLY: {
 		String name_a = _get_node_connected_to(name, 0);
 		String name_b = _get_node_connected_to(name, 1);
 		Generator gen_a = name_a == "" ? FixedValue(0) : _create_generator(name_a);
-		Generator gen_b = name_b == "" ? FixedValue(0) : _create_generator(name_b);
+		Generator gen_b = name_b == "" ? FixedValue(data->get_params()["value"]) : _create_generator(name_b);
 		return gen_a * gen_b;
 	}
 	}

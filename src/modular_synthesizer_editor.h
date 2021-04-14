@@ -20,10 +20,15 @@ class SynthNode : public GraphNode {
 protected:
 	Ref<NodeData> data;
 
+	void _shrink_size();
 	static void _bind_methods();
 	void _notification(int p_what);
 
 public:
+	virtual void input_connected(int p_index) {};
+	virtual void input_disconnected(int p_index) {};
+	virtual void output_connected(int p_index) {};
+	virtual void output_disconnected(int p_index) {};
 	SynthNode(Ref<NodeData> p_data);
 };
 
@@ -43,6 +48,8 @@ public:
 
 class SineWaveGeneratorNode : public SynthNode {
 	GDCLASS(SineWaveGeneratorNode, SynthNode);
+	
+	SpinBox* freq;
 
 	void _freq_changed(double value);
 
@@ -50,22 +57,40 @@ protected:
 	static void _bind_methods();
 
 public:
+	virtual void input_connected(int p_index);
+	virtual void input_disconnected(int p_index);
 	SineWaveGeneratorNode(Ref<NodeData> p_data);
 };
 
 
-class AddNode : public SynthNode {
-	GDCLASS(AddNode, SynthNode);
+class MergeNode : public SynthNode {
+	GDCLASS(MergeNode, SynthNode);
+
+	SpinBox* value;
+
+	void _value_changed(double value);
+
+protected:
+	static void _bind_methods();
 
 public:
-	AddNode(Ref<NodeData> p_data);
+	virtual void input_connected(int p_index);
+	virtual void input_disconnected(int p_index);
+	MergeNode(Ref<NodeData> p_data);
 };
 
-class MultiplyNode : public SynthNode {
-	GDCLASS(MultiplyNode, SynthNode);
+class MultiplyNode : public MergeNode {
+	GDCLASS(MultiplyNode, MergeNode);
 
 public:
 	MultiplyNode(Ref<NodeData> p_data);
+};
+
+class AddNode : public MergeNode {
+	GDCLASS(AddNode, MergeNode);
+
+public:
+	AddNode(Ref<NodeData> p_data);
 };
 
 
@@ -93,6 +118,8 @@ class ModularSynthesizerEditor : public VBoxContainer {
 	void _connection_request(const String& p_from, int p_from_index, const String& p_to, int p_to_index);
 	void _disconnection_request(const String& p_from, int p_from_index, const String& p_to, int p_to_index);
 	void _delete_nodes_request();
+	void _connect_node(const String& p_from, int p_from_port, const String& p_to, int p_to_port);
+	void _disconnect_node(const String& p_from, int p_from_port, const String& p_to, int p_to_port);
 
 protected:
 	static void _bind_methods();
