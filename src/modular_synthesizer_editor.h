@@ -26,9 +26,7 @@ protected:
 
 public:
 	virtual void input_connected(int p_index) {};
-	virtual void input_disconnected(int p_index) {};
 	virtual void output_connected(int p_index) {};
-	virtual void output_disconnected(int p_index) {};
 	SynthNode(Ref<NodeData> p_data);
 };
 
@@ -58,7 +56,6 @@ protected:
 
 public:
 	virtual void input_connected(int p_index);
-	virtual void input_disconnected(int p_index);
 	SineWaveGeneratorNode(Ref<NodeData> p_data);
 };
 
@@ -75,7 +72,6 @@ protected:
 
 public:
 	virtual void input_connected(int p_index);
-	virtual void input_disconnected(int p_index);
 	MergeNode(Ref<NodeData> p_data);
 };
 
@@ -119,7 +115,7 @@ class ModularSynthesizerEditor : public VBoxContainer {
 	void _disconnection_request(const String& p_from, int p_from_index, const String& p_to, int p_to_index);
 	void _delete_nodes_request();
 	void _connect_node(const String& p_from, int p_from_port, const String& p_to, int p_to_port);
-	void _disconnect_node(const String& p_from, int p_from_port, const String& p_to, int p_to_port);
+	void _refresh_graph();
 
 protected:
 	static void _bind_methods();

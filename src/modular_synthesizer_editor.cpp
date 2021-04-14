@@ -58,41 +58,7 @@ SynthNode* ModularSynthesizerEditor::_create_node(Ref<NodeData> p_data)
 void ModularSynthesizerEditor::edit(ModularSynthesizer* p_synth) {
 	if (p_synth) {
 		synth = Ref<ModularSynthesizer>(p_synth);
-
-		graph->clear_connections();
-
-		for (int i = 0; i < graph->get_child_count(); i++) 
-		{
-			Node* node = graph->get_child(i);
-			if (Object::cast_to<GraphNode>(node)) {
-				graph->remove_child(node);
-				memdelete(node);
-				i--;
-			}
-		}
-
-		Dictionary nodes = synth->get_nodes();
-		for (const Variant *key = nodes.next(); key != NULL; key = nodes.next(key))
-		{
-			SynthNode* node = _create_node(nodes[*key]);	
-			node->set_name(*key);
-			graph->add_child(node);
-		}
-
-		if (synth->get_output() == NULL)
-		{
-			Ref<NodeData> output_data = memnew(NodeData);
-			output_data->set_position((graph->get_scroll_ofs() + (graph->get_size() * 0.5)) / EDSCALE);
-			synth->set_output(output_data);
-		}
-		OutputNode* output = memnew(OutputNode(synth->get_output()));
-		graph->add_child(output);
-
-		for (size_t i = 0; i < synth->get_connections().size(); i++)
-		{
-			Ref<ConnectionData> c = synth->get_connections().get(i);
-			_connect_node(c->get_from(), c->get_from_index(), c->get_to(), c->get_to_index());
-		}
+		_refresh_graph();
 	}
 	else {
 		synth.unref();
@@ -135,25 +101,23 @@ void ModularSynthesizerEditor::_connection_request(const String& p_from, int p_f
 		if (c->get_to() == p_to && c->get_to_index() == p_to_index)
 		{
 			synth->get_connections().remove(i);
-			_disconnect_node(c->get_from(), c->get_from_index(), p_to, p_to_index);
 		}
 
 		// Allow only single connection to each output
 		if (c->get_from() == p_from && c->get_from_index() == p_from_index)
 		{
 			synth->get_connections().remove(i);
-			_disconnect_node(p_from, p_from_index, c->get_to(), c->get_to_index());
 		}
 	}
 
 	Ref<ConnectionData> c = memnew(ConnectionData(p_from, p_from_index, p_to, p_to_index));
 	synth->get_connections().append(c);
-	_connect_node(p_from, p_from_index, p_to, p_to_index);
+
+	_refresh_graph();
 }
 
 void ModularSynthesizerEditor::_disconnection_request(const String& p_from, int p_from_index, const String& p_to, int p_to_index)
 {
-	_disconnect_node(p_from, p_from_index, p_to, p_to_index);
 	for (size_t i = 0; i < synth->get_connections().size(); i++)
 	{
 		Ref<ConnectionData> c = synth->get_connections().get(i);
@@ -164,6 +128,8 @@ void ModularSynthesizerEditor::_disconnection_request(const String& p_from, int 
 			break;
 		}
 	}
+
+	_refresh_graph();
 }
 
 void ModularSynthesizerEditor::_delete_nodes_request()
@@ -185,15 +151,14 @@ void ModularSynthesizerEditor::_delete_nodes_request()
 				if (c->get_from() == gn->get_name() || c->get_to() == gn->get_name())
 				{
 					synth->get_connections().remove(i);
-					_disconnect_node(c->get_from(), c->get_from_index(), c->get_to(), c->get_to_index());
 				}
 			}
 			
 			synth->get_nodes().erase(gn->get_name());
-			graph->remove_child(gn);
-			memdelete(gn);
 		}
 	}
+
+	_refresh_graph();
 }
 
 void ModularSynthesizerEditor::_connect_node(const String& p_from, int p_from_port, const String& p_to, int p_to_port)
@@ -203,11 +168,42 @@ void ModularSynthesizerEditor::_connect_node(const String& p_from, int p_from_po
 	graph->connect_node(p_from, p_from_port, p_to, p_to_port);
 }
 
-void ModularSynthesizerEditor::_disconnect_node(const String& p_from, int p_from_port, const String& p_to, int p_to_port)
+void ModularSynthesizerEditor::_refresh_graph()
 {
-	Object::cast_to<SynthNode>(graph->get_node(p_from))->output_disconnected(p_from_port);
-	Object::cast_to<SynthNode>(graph->get_node(p_to))->input_disconnected(p_to_port);
-	graph->disconnect_node(p_from, p_from_port, p_to, p_to_port);
+	graph->clear_connections();
+
+	for (int i = 0; i < graph->get_child_count(); i++)
+	{
+		Node* node = graph->get_child(i);
+		if (Object::cast_to<GraphNode>(node)) {
+			graph->remove_child(node);
+			memdelete(node);
+			i--;
+		}
+	}
+
+	Dictionary nodes = synth->get_nodes();
+	for (const Variant* key = nodes.next(); key != NULL; key = nodes.next(key))
+	{
+		SynthNode* node = _create_node(nodes[*key]);
+		node->set_name(*key);
+		graph->add_child(node);
+	}
+
+	if (synth->get_output() == NULL)
+	{
+		Ref<NodeData> output_data = memnew(NodeData);
+		output_data->set_position((graph->get_scroll_ofs() + (graph->get_size() * 0.5)) / EDSCALE);
+		synth->set_output(output_data);
+	}
+	OutputNode* output = memnew(OutputNode(synth->get_output()));
+	graph->add_child(output);
+
+	for (size_t i = 0; i < synth->get_connections().size(); i++)
+	{
+		Ref<ConnectionData> c = synth->get_connections().get(i);
+		_connect_node(c->get_from(), c->get_from_index(), c->get_to(), c->get_to_index());
+	}
 }
 
 
@@ -298,12 +294,6 @@ void SineWaveGeneratorNode::input_connected(int p_index)
 	_shrink_size();
 }
 
-void SineWaveGeneratorNode::input_disconnected(int p_index)
-{
-	freq->set_visible(true);
-	_shrink_size();
-}
-
 SineWaveGeneratorNode::SineWaveGeneratorNode(Ref<NodeData> p_data)
 	: SynthNode(p_data)
 {
@@ -367,15 +357,6 @@ void MergeNode::input_connected(int p_index)
 	if (p_index == 1)
 	{
 		value->set_visible(false);
-		_shrink_size();
-	}
-}
-
-void MergeNode::input_disconnected(int p_index)
-{
-	if (p_index == 1)
-	{
-		value->set_visible(true);
 		_shrink_size();
 	}
 }

@@ -1,5 +1,7 @@
 Import('env')
 
+env['no_import_lib'] = 1
+
 module_env = env.Clone()
 
 module_env .add_source_files(env.modules_sources, "*.cpp")
