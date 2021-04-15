@@ -3,6 +3,7 @@
 #include "servers/audio/audio_stream.h"
 
 #include "../thirdparty/tonic/src/Tonic.h"
+#include "modular_synthesizer.h"
 
 class ModularSynthesizerPlayback : public AudioStreamPlayback {
 	GDCLASS(ModularSynthesizerPlayback, AudioStreamPlayback);

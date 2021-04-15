@@ -61,7 +61,7 @@ Generator ModularSynthesizerPlayback::_create_generator(String name)
 		{
 			sine.freq(_create_generator(freqName));
 		}
-		return sine;
+		return std::move(sine);
 	}
 	case NodeData::NodeType::NODE_ADD: {
 		String name_a = _get_node_connected_to(name, 0);
@@ -77,6 +77,8 @@ Generator ModularSynthesizerPlayback::_create_generator(String name)
 		Generator gen_b = name_b == "" ? FixedValue(data->get_params()["value"]) : _create_generator(name_b);
 		return gen_a * gen_b;
 	}
+	case NodeData::NodeType::NODE_SPECIAL:
+		break;
 	}
 	return FixedValue(0);
 }
