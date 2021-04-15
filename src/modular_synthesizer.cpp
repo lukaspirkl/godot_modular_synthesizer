@@ -13,7 +13,7 @@ Ref<AudioStreamPlayback> ModularSynthesizer::instance_playback() {
 
 void ModularSynthesizer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_length"), &ModularSynthesizer::set_length);
-	ClassDB::bind_method(D_METHOD("get_length"), &ModularSynthesizer::get_length);
+	// get_length is already registered by base class
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "length"), "set_length", "get_length");
 
 	ClassDB::bind_method(D_METHOD("set_nodes"), &ModularSynthesizer::set_nodes);
