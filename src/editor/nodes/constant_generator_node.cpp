@@ -5,6 +5,7 @@
 void ConstantGeneratorNode::_value_changed(double value)
 {
 	data->get_params()["value"] = value;
+	synth->emit_signal("changed");
 }
 
 void ConstantGeneratorNode::_bind_methods()
@@ -12,8 +13,8 @@ void ConstantGeneratorNode::_bind_methods()
 	ClassDB::bind_method("_value_changed", &ConstantGeneratorNode::_value_changed);
 }
 
-ConstantGeneratorNode::ConstantGeneratorNode(Ref<NodeData> p_data)
-	: SynthNode(p_data)
+ConstantGeneratorNode::ConstantGeneratorNode(Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data)
+	: SynthNode(p_synth, p_data)
 {
 	set_title("Constant");
 

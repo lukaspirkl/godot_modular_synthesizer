@@ -29,8 +29,8 @@ void SynthNode::_notification(int p_what)
 	}
 }
 
-SynthNode::SynthNode(Ref<NodeData> p_data)
-	: data(p_data)
+SynthNode::SynthNode(Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data)
+	: synth(p_synth), data(p_data)
 {
 	set_offset(p_data->get_position());
 }

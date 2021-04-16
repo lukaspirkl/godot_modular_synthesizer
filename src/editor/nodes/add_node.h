@@ -7,5 +7,5 @@ class AddNode : public MergeNode {
 	GDCLASS(AddNode, MergeNode);
 
 public:
-	AddNode(Ref<NodeData> p_data);
+	AddNode(Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data);
 };

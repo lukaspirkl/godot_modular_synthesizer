@@ -19,7 +19,6 @@ class ModularSynthesizerEditor : public VBoxContainer {
 	void _connection_request(const String& p_from, int p_from_index, const String& p_to, int p_to_index);
 	void _disconnection_request(const String& p_from, int p_from_index, const String& p_to, int p_to_index);
 	void _delete_nodes_request();
-	void _connect_node(const String& p_from, int p_from_port, const String& p_to, int p_to_port);
 	void _refresh_graph();
 
 protected:

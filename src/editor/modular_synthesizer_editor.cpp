@@ -52,13 +52,13 @@ SynthNode* ModularSynthesizerEditor::_create_node(Ref<NodeData> p_data)
 	switch (p_data->get_type())
 	{
 	case NodeData::NodeType::NODE_CONSTANT:
-		return memnew(ConstantGeneratorNode(p_data));
+		return memnew(ConstantGeneratorNode(synth, p_data));
 	case NodeData::NodeType::NODE_SINE_WAVE:
-		return memnew(SineWaveGeneratorNode(p_data));
+		return memnew(SineWaveGeneratorNode(synth, p_data));
 	case NodeData::NodeType::NODE_ADD:
-		return memnew(AddNode(p_data));
+		return memnew(AddNode(synth, p_data));
 	case NodeData::NodeType::NODE_MULTIPLY:
-		return memnew(MultiplyNode(p_data));
+		return memnew(MultiplyNode(synth, p_data));
 	default:
 		return NULL;
 	}
@@ -98,6 +98,7 @@ void ModularSynthesizerEditor::_add_node(int p_id)
 	SynthNode* node = _create_node(data);
 	graph->add_child(node); // This will also generate and set unique name
 	synth->get_nodes()[node->get_name()] = Variant(data);
+	synth->emit_signal("changed");
 }
 
 void ModularSynthesizerEditor::_connection_request(const String& p_from, int p_from_index, const String& p_to, int p_to_index)
@@ -123,6 +124,7 @@ void ModularSynthesizerEditor::_connection_request(const String& p_from, int p_f
 	synth->get_connections().append(c);
 
 	_refresh_graph();
+	synth->emit_signal("changed");
 }
 
 void ModularSynthesizerEditor::_disconnection_request(const String& p_from, int p_from_index, const String& p_to, int p_to_index)
@@ -139,6 +141,7 @@ void ModularSynthesizerEditor::_disconnection_request(const String& p_from, int 
 	}
 
 	_refresh_graph();
+	synth->emit_signal("changed");
 }
 
 void ModularSynthesizerEditor::_delete_nodes_request()
@@ -168,13 +171,7 @@ void ModularSynthesizerEditor::_delete_nodes_request()
 	}
 
 	_refresh_graph();
-}
-
-void ModularSynthesizerEditor::_connect_node(const String& p_from, int p_from_port, const String& p_to, int p_to_port)
-{
-	Object::cast_to<SynthNode>(graph->get_node(p_from))->output_connected(p_from_port);
-	Object::cast_to<SynthNode>(graph->get_node(p_to))->input_connected(p_to_port);
-	graph->connect_node(p_from, p_from_port, p_to, p_to_port);
+	synth->emit_signal("changed");
 }
 
 void ModularSynthesizerEditor::_refresh_graph()
@@ -205,12 +202,14 @@ void ModularSynthesizerEditor::_refresh_graph()
 		output_data->set_position((graph->get_scroll_ofs() + (graph->get_size() * 0.5)) / EDSCALE);
 		synth->set_output(output_data);
 	}
-	OutputNode* output = memnew(OutputNode(synth->get_output()));
+	OutputNode* output = memnew(OutputNode(synth, synth->get_output()));
 	graph->add_child(output);
 
 	for (size_t i = 0; i < synth->get_connections().size(); i++)
 	{
 		Ref<ConnectionData> c = synth->get_connections().get(i);
-		_connect_node(c->get_from(), c->get_from_index(), c->get_to(), c->get_to_index());
+		Object::cast_to<SynthNode>(graph->get_node(c->get_from()))->output_connected(c->get_from_index());
+		Object::cast_to<SynthNode>(graph->get_node(c->get_to()))->input_connected(c->get_to_index());
+		graph->connect_node(c->get_from(), c->get_from_index(), c->get_to(), c->get_to_index());
 	}
 }

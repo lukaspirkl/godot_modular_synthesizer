@@ -15,5 +15,5 @@ protected:
 
 public:
 	virtual void input_connected(int p_index);
-	SineWaveGeneratorNode(Ref<NodeData> p_data);
+	SineWaveGeneratorNode(Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data);
 };

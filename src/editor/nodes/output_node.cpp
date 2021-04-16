@@ -2,8 +2,8 @@
 
 #include "output_node.h"
 
-OutputNode::OutputNode(Ref<NodeData> p_data)
-	: SynthNode(p_data)
+OutputNode::OutputNode(Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data)
+	: SynthNode(p_synth, p_data)
 {
 	set_title("Output");
 

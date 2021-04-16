@@ -7,6 +7,7 @@
 void SineWaveGeneratorNode::_freq_changed(double value)
 {
 	data->get_params()["freq"] = value;
+	synth->emit_signal("changed");
 }
 
 void SineWaveGeneratorNode::_bind_methods()
@@ -20,8 +21,8 @@ void SineWaveGeneratorNode::input_connected(int p_index)
 	_shrink_size();
 }
 
-SineWaveGeneratorNode::SineWaveGeneratorNode(Ref<NodeData> p_data)
-	: SynthNode(p_data)
+SineWaveGeneratorNode::SineWaveGeneratorNode(Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data)
+	: SynthNode(p_synth, p_data)
 {
 	set_title("Sine Wave");
 	HBoxContainer* hb = memnew(HBoxContainer);

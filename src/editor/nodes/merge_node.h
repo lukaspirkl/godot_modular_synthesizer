@@ -15,5 +15,5 @@ protected:
 
 public:
 	virtual void input_connected(int p_index);
-	MergeNode(Ref<NodeData> p_data);
+	MergeNode(Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data);
 };

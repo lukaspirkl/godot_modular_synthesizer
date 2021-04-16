@@ -7,6 +7,7 @@
 void MergeNode::_value_changed(double value)
 {
 	data->get_params()["value"] = value;
+	synth->emit_signal("changed");
 }
 
 void MergeNode::_bind_methods()
@@ -23,8 +24,8 @@ void MergeNode::input_connected(int p_index)
 	}
 }
 
-MergeNode::MergeNode(Ref<NodeData> p_data)
-	: SynthNode(p_data)
+MergeNode::MergeNode(Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data)
+	: SynthNode(p_synth, p_data)
 {
 	set_title("Add");
 

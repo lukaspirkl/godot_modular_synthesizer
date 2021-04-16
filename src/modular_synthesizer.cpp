@@ -8,6 +8,7 @@ Ref<AudioStreamPlayback> ModularSynthesizer::instance_playback() {
 	Ref<ModularSynthesizerPlayback> playback;
 	playback.instance();
 	playback->res = this;
+	this->connect("changed", playback.ptr(), "resource_changed");
 	return playback;
 }
 

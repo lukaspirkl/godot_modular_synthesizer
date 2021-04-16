@@ -10,6 +10,7 @@ class ModularSynthesizerPlayback : public AudioStreamPlayback {
 	friend class ModularSynthesizer;
 
 	bool active;
+	bool is_res_up_to_date = false;
 	ModularSynthesizer* res;
 	uint64_t pos;
 	Tonic::Synth synth;
@@ -21,6 +22,8 @@ protected:
 	static void _bind_methods();
 
 public:
+	void resource_changed();
+
 	virtual void start(float p_from_pos = 0.0);
 	virtual void stop();
 	virtual bool is_playing() const;

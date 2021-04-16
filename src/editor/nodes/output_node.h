@@ -7,5 +7,5 @@ class OutputNode : public SynthNode {
 	GDCLASS(OutputNode, SynthNode);
 
 public:
-	OutputNode(Ref<NodeData> p_data);
+	OutputNode(Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data);
 };

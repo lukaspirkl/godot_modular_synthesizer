@@ -7,5 +7,5 @@ class MultiplyNode : public MergeNode {
 	GDCLASS(MultiplyNode, MergeNode);
 
 public:
-	MultiplyNode(Ref<NodeData> p_data);
+	MultiplyNode(Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data);
 };

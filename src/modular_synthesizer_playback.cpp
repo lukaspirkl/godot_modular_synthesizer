@@ -4,6 +4,15 @@
 
 using namespace Tonic;
 
+void ModularSynthesizerPlayback::_bind_methods() {
+	ClassDB::bind_method("resource_changed", &ModularSynthesizerPlayback::resource_changed);
+}
+
+void ModularSynthesizerPlayback::resource_changed()
+{
+	is_res_up_to_date = false;
+}
+
 void ModularSynthesizerPlayback::start(float p_from_pos) {
 	active = true;
 	pos = 0;
@@ -36,14 +45,26 @@ void ModularSynthesizerPlayback::start(float p_from_pos) {
 
 	//Generator output = ((tone * env) >> filter >> delay) * 0.3;
 
-	
-	String name = _get_node_connected_to("OutputNode", 0);
-	Generator gen = _create_generator(name);
-	synth.setOutputGen(gen);
+	if (!is_res_up_to_date)
+	{
+		String name = _get_node_connected_to("OutputNode", 0);
+		Generator gen = _create_generator(name);
+		synth.setOutputGen(gen);
+		is_res_up_to_date = true;
+	}
+	else
+	{
+		synth.forceNewOutput();
+	}
 }
 
 Generator ModularSynthesizerPlayback::_create_generator(String name)
 {
+	if (name == "")
+	{
+		return FixedValue(0);
+	}
+
 	Ref<NodeData> data = res->get_nodes()[name];
 	switch (data->get_type())
 	{
@@ -51,17 +72,15 @@ Generator ModularSynthesizerPlayback::_create_generator(String name)
 		return FixedValue(data->get_params()["value"]);
 	}
 	case NodeData::NodeType::NODE_SINE_WAVE: {
-		SineWave sine = SineWave();
 		String freqName = _get_node_connected_to(name, 0);
 		if (freqName == "")
 		{
-			sine.freq(data->get_params()["freq"]);
+			return SineWave().freq(data->get_params()["freq"]);
 		}
 		else
 		{
-			sine.freq(_create_generator(freqName));
+			return SineWave().freq(_create_generator(freqName));
 		}
-		return std::move(sine);
 	}
 	case NodeData::NodeType::NODE_ADD: {
 		String name_a = _get_node_connected_to(name, 0);
@@ -124,9 +143,6 @@ void ModularSynthesizerPlayback::mix(AudioFrame* p_buffer, float p_rate_scale, i
 	{
 		active = false;
 	}
-}
-
-void ModularSynthesizerPlayback::_bind_methods() {
 }
 
 ModularSynthesizerPlayback::ModularSynthesizerPlayback() {

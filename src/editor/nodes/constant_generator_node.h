@@ -12,5 +12,5 @@ protected:
 	static void _bind_methods();
 
 public:
-	ConstantGeneratorNode(Ref<NodeData> p_data);
+	ConstantGeneratorNode(Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data);
 };
