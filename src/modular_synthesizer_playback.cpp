@@ -97,6 +97,7 @@ Generator ModularSynthesizerPlayback::_create_generator(String name)
 		return gen_a * gen_b;
 	}
 	case NodeData::NodeType::NODE_SPECIAL:
+	case NodeData::NodeType::NODE_COMMENT:
 		break;
 	}
 	return FixedValue(0);
