@@ -72,7 +72,7 @@ Generator* ModularSynthesizerPlayback::_create_generator(String name)
 		return gens[name];
 	}
 
-	Generator* gen;
+	Generator* gen = NULL;
 
 	if (name == "")
 	{
