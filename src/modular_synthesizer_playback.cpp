@@ -47,9 +47,16 @@ void ModularSynthesizerPlayback::start(float p_from_pos) {
 
 	if (!is_res_up_to_date)
 	{
+		for (Map<String, Generator*>::Element* E = gens.back(); E; E = E->prev())
+		{
+			Generator* gen = E->value();
+			memdelete(gen);
+		}
+		gens.clear();
+
 		String name = _get_node_connected_to("OutputNode", 0);
-		Generator gen = _create_generator(name);
-		synth.setOutputGen(gen);
+		Generator* gen = _create_generator(name);
+		synth.setOutputGen(*gen);
 		is_res_up_to_date = true;
 	}
 	else
@@ -58,49 +65,88 @@ void ModularSynthesizerPlayback::start(float p_from_pos) {
 	}
 }
 
-Generator ModularSynthesizerPlayback::_create_generator(String name)
+Generator* ModularSynthesizerPlayback::_create_generator(String name)
 {
+	if (gens.has(name))
+	{
+		return gens[name];
+	}
+
+	Generator* gen;
+
 	if (name == "")
 	{
-		return FixedValue(0);
+		gen = memnew(FixedValue(0));
+		gens.insert(name, gen);
+		return gen;
 	}
 
 	Ref<NodeData> data = res->get_nodes()[name];
 	switch (data->get_type())
 	{
 	case NodeData::NodeType::NODE_CONSTANT: {
-		return FixedValue(data->get_params()["value"]);
-	}
+		gen = memnew(FixedValue(data->get_params()["value"]));
+	} break;
 	case NodeData::NodeType::NODE_SINE_WAVE: {
 		String freqName = _get_node_connected_to(name, 0);
+		SineWave* s = memnew(SineWave());
+		gen = s;
 		if (freqName == "")
 		{
-			return SineWave().freq(data->get_params()["freq"]);
+			s->freq(data->get_params()["freq"]);
 		}
 		else
 		{
-			return SineWave().freq(_create_generator(freqName));
+			s->freq(*_create_generator(freqName));
 		}
-	}
+	} break;
 	case NodeData::NodeType::NODE_ADD: {
+		Adder* a = memnew(Adder());
+		gen = a;
+
 		String name_a = _get_node_connected_to(name, 0);
+		if (name_a != "")
+		{
+			a->input(*_create_generator(name_a));
+		}
+
 		String name_b = _get_node_connected_to(name, 1);
-		Generator gen_a = name_a == "" ? FixedValue(0) : _create_generator(name_a);
-		Generator gen_b = name_b == "" ? FixedValue(data->get_params()["value"]) : _create_generator(name_b);
-		return gen_a + gen_b;
-	}
+		if (name_b != "")
+		{
+			a->input(*_create_generator(name_b));
+		}
+		else
+		{
+			a->input(FixedValue(data->get_params()["value"]));
+		}
+	} break;
 	case NodeData::NodeType::NODE_MULTIPLY: {
+		Multiplier* a = memnew(Multiplier());
+		gen = a;
+
 		String name_a = _get_node_connected_to(name, 0);
+		if (name_a != "")
+		{
+			a->input(*_create_generator(name_a));
+		}
+
 		String name_b = _get_node_connected_to(name, 1);
-		Generator gen_a = name_a == "" ? FixedValue(0) : _create_generator(name_a);
-		Generator gen_b = name_b == "" ? FixedValue(data->get_params()["value"]) : _create_generator(name_b);
-		return gen_a * gen_b;
-	}
+		if (name_b != "")
+		{
+			a->input(*_create_generator(name_b));
+		}
+		else
+		{
+			a->input(FixedValue(data->get_params()["value"]));
+		}
+	} break;
 	case NodeData::NodeType::NODE_SPECIAL:
 	case NodeData::NodeType::NODE_COMMENT:
 		break;
 	}
-	return FixedValue(0);
+
+	gens.insert(name, gen);
+	return gen;
 }
 
 String ModularSynthesizerPlayback::_get_node_connected_to(String name, int index)

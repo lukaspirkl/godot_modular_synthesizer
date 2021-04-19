@@ -14,9 +14,10 @@ class ModularSynthesizerPlayback : public AudioStreamPlayback {
 	ModularSynthesizer* res;
 	uint64_t pos;
 	Tonic::Synth synth;
+	Map<String, Tonic::Generator*> gens;
 
 	String _get_node_connected_to(String name, int index);
-	Tonic::Generator _create_generator(String name);
+	Tonic::Generator* _create_generator(String name);
 
 protected:
 	static void _bind_methods();

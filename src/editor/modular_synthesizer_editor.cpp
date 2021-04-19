@@ -117,12 +117,6 @@ void ModularSynthesizerEditor::_connection_request(const String& p_from, int p_f
 		{
 			synth->get_connections().remove(i);
 		}
-
-		// Allow only single connection to each output
-		if (c->get_from() == p_from && c->get_from_index() == p_from_index)
-		{
-			synth->get_connections().remove(i);
-		}
 	}
 
 	Ref<ConnectionData> c = memnew(ConnectionData(p_from, p_from_index, p_to, p_to_index));
