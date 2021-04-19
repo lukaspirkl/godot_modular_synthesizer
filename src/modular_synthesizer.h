@@ -12,6 +12,7 @@ class ModularSynthesizer : public AudioStream {
 	Dictionary nodes;
 	Array connections;
 	Ref<NodeData> output;
+	Vector2 offset;
 
 protected:
 	static void _bind_methods();
@@ -23,6 +24,8 @@ public:
 	Array get_connections() const { return connections; }
 	void set_output(Ref<NodeData> value) { output = value; }
 	Ref<NodeData> get_output() const { return output; }
+	void set_offset(Vector2 value) { offset = value; }
+	Vector2 get_offset() const { return offset; }
 
 	virtual float get_length() const { return length; }
 	void set_length(float value) { length = value; }

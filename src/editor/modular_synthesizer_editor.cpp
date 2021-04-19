@@ -18,6 +18,7 @@ void ModularSynthesizerEditor::_bind_methods()
 	ClassDB::bind_method("_connection_request", &ModularSynthesizerEditor::_connection_request);
 	ClassDB::bind_method("_disconnection_request", &ModularSynthesizerEditor::_disconnection_request);
 	ClassDB::bind_method("_delete_nodes_request", &ModularSynthesizerEditor::_delete_nodes_request);
+	ClassDB::bind_method("_scroll_changed", &ModularSynthesizerEditor::_scroll_changed);
 }
 
 ModularSynthesizerEditor::ModularSynthesizerEditor() {
@@ -31,6 +32,7 @@ ModularSynthesizerEditor::ModularSynthesizerEditor() {
 	graph->connect("connection_request", this, "_connection_request");
 	graph->connect("disconnection_request", this, "_disconnection_request");
 	graph->connect("delete_nodes_request", this, "_delete_nodes_request");
+	graph->connect("scroll_offset_changed", this, "_scroll_changed");
 	add_child(graph);
 
 	context_menu = memnew(PopupMenu);
@@ -98,7 +100,7 @@ void ModularSynthesizerEditor::_add_node(int p_id)
 	position += new_node_pos;
 
 	Ref<NodeData> data = memnew(NodeData);
-	data->set_position(position);
+	data->set_position(position / EDSCALE);
 	data->set_type(type);
 	SynthNode* node = _create_node(data);
 	graph->add_child(node); // This will also generate and set unique name
@@ -173,8 +175,15 @@ void ModularSynthesizerEditor::_delete_nodes_request()
 	synth->emit_signal("changed");
 }
 
+void ModularSynthesizerEditor::_scroll_changed(const Vector2& p_scroll)
+{
+	synth->set_offset(p_scroll / EDSCALE);
+}
+
 void ModularSynthesizerEditor::_refresh_graph()
 {
+	graph->set_scroll_ofs(synth->get_offset() * EDSCALE);
+
 	graph->clear_connections();
 
 	for (int i = 0; i < graph->get_child_count(); i++)

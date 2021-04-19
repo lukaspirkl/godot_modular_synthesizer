@@ -1,3 +1,4 @@
+#include "editor/editor_scale.h"
 #include "synth_node.h"
 
 void SynthNode::_offset_changed()
@@ -32,5 +33,5 @@ void SynthNode::_notification(int p_what)
 SynthNode::SynthNode(Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data)
 	: synth(p_synth), data(p_data)
 {
-	set_offset(p_data->get_position());
+	set_offset(p_data->get_position() * EDSCALE);
 }

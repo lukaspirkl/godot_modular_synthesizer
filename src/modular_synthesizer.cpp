@@ -28,4 +28,8 @@ void ModularSynthesizer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_output"), &ModularSynthesizer::set_output);
 	ClassDB::bind_method(D_METHOD("get_output"), &ModularSynthesizer::get_output);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "output", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_output", "get_output");
+
+	ClassDB::bind_method(D_METHOD("set_offset"), &ModularSynthesizer::set_offset);
+	ClassDB::bind_method(D_METHOD("get_offset"), &ModularSynthesizer::get_offset);
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "offset", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_offset", "get_offset");
 }
