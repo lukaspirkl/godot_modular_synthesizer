@@ -8,6 +8,7 @@
 #include "nodes/multiply_node.h"
 #include "nodes/output_node.h"
 #include "nodes/sine_wave_generator_node.h"
+#include "nodes/parameter_node.h"
 #include "nodes/comment_node.h"
 #include "../connection_data.h"
 
@@ -37,12 +38,9 @@ ModularSynthesizerEditor::ModularSynthesizerEditor() {
 
 	context_menu = memnew(PopupMenu);
 	context_menu->add_item("Constant", NodeData::NodeType::NODE_CONSTANT);
+	context_menu->add_item("Parameter", NodeData::NodeType::NODE_PARAMETER);
 	context_menu->add_separator();
 	context_menu->add_item("Sine Wave", NodeData::NodeType::NODE_SINE_WAVE);
-	context_menu->add_item("Square Wave", 1);
-	context_menu->set_item_disabled(3, true);
-	context_menu->add_item("Triangle Wave", 1);
-	context_menu->set_item_disabled(4, true);
 	context_menu->add_separator();
 	context_menu->add_item("Add", NodeData::NodeType::NODE_ADD);
 	context_menu->add_item("Multiply", NodeData::NodeType::NODE_MULTIPLY);
@@ -64,6 +62,8 @@ SynthNode* ModularSynthesizerEditor::_create_node(Ref<NodeData> p_data)
 		return memnew(AddNode(synth, p_data));
 	case NodeData::NodeType::NODE_MULTIPLY:
 		return memnew(MultiplyNode(synth, p_data));
+	case NodeData::NodeType::NODE_PARAMETER:
+		return memnew(ParameterNode(synth, p_data));
 	case NodeData::NodeType::NODE_COMMENT:
 		return memnew(CommentNode(synth, p_data));
 	default:

@@ -14,16 +14,21 @@ class ModularSynthesizerPlayback : public AudioStreamPlayback {
 	ModularSynthesizer* res;
 	uint64_t pos;
 	Tonic::Synth synth;
-	Map<String, Tonic::Generator*> gens;
+	Map<String, Tonic::Generator*> generators;
+	Map<String, Tonic::ControlGenerator*> control_generators;
 
-	String _get_node_connected_to(String name, int index);
-	Tonic::Generator* _create_generator(String name);
+	String _get_node_connected_to(const String& name, int index);
+	Tonic::Generator* _get_generator(const String& name);
+	Tonic::Generator* _create_generator(const String& name);
+	Tonic::ControlGenerator* _get_control_generator(const String& name);
+	Tonic::ControlGenerator* _create_control_generator(const String& name);
 
 protected:
 	static void _bind_methods();
 
 public:
 	void resource_changed();
+	void parameter_changed(const String& p_name, float p_value);
 
 	virtual void start(float p_from_pos = 0.0);
 	virtual void stop();

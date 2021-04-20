@@ -6,11 +6,19 @@ using namespace Tonic;
 
 void ModularSynthesizerPlayback::_bind_methods() {
 	ClassDB::bind_method("resource_changed", &ModularSynthesizerPlayback::resource_changed);
+	ClassDB::bind_method("parameter_changed", &ModularSynthesizerPlayback::parameter_changed);
 }
 
 void ModularSynthesizerPlayback::resource_changed()
 {
 	is_res_up_to_date = false;
+}
+
+void ModularSynthesizerPlayback::parameter_changed(const String& p_name, float p_value)
+{
+	std::wstring ws = p_name.c_str();
+	std::string s(ws.begin(), ws.end());
+	synth.setParameter(s, p_value);
 }
 
 void ModularSynthesizerPlayback::start(float p_from_pos) {
@@ -47,15 +55,28 @@ void ModularSynthesizerPlayback::start(float p_from_pos) {
 
 	if (!is_res_up_to_date)
 	{
-		for (Map<String, Generator*>::Element* E = gens.back(); E; E = E->prev())
+		for (Map<String, Generator*>::Element* E = generators.back(); E; E = E->prev())
 		{
 			Generator* gen = E->value();
-			memdelete(gen);
+			if (gen != NULL)
+			{
+				memdelete(gen);
+			}
 		}
-		gens.clear();
+		generators.clear();
+
+		for (Map<String, ControlGenerator*>::Element* E = control_generators.back(); E; E = E->prev())
+		{
+			ControlGenerator* gen = E->value();
+			if (gen != NULL)
+			{
+				memdelete(gen);
+			}
+		}
+		control_generators.clear();
 
 		String name = _get_node_connected_to("OutputNode", 0);
-		Generator* gen = _create_generator(name);
+		Generator* gen = _get_generator(name);
 		synth.setOutputGen(*gen);
 		is_res_up_to_date = true;
 	}
@@ -65,91 +86,139 @@ void ModularSynthesizerPlayback::start(float p_from_pos) {
 	}
 }
 
-Generator* ModularSynthesizerPlayback::_create_generator(String name)
+Tonic::Generator* ModularSynthesizerPlayback::_get_generator(const String& name)
 {
-	if (gens.has(name))
+	if (generators.has(name))
 	{
-		return gens[name];
+		return generators[name];
 	}
 
-	Generator* gen = NULL;
+	Generator* gen = _create_generator(name);
+	generators.insert(name, gen);
+	return gen;
+}
 
+Generator* ModularSynthesizerPlayback::_create_generator(const String& name)
+{
 	if (name == "")
 	{
-		gen = memnew(FixedValue(0));
-		gens.insert(name, gen);
-		return gen;
+		return memnew(FixedValue(0));
 	}
 
 	Ref<NodeData> data = res->get_nodes()[name];
 	switch (data->get_type())
 	{
 	case NodeData::NodeType::NODE_CONSTANT: {
-		gen = memnew(FixedValue(data->get_params()["value"]));
-	} break;
+		return memnew(FixedValue(data->get_params()["value"]));
+	}
 	case NodeData::NodeType::NODE_SINE_WAVE: {
 		String freqName = _get_node_connected_to(name, 0);
 		SineWave* s = memnew(SineWave());
-		gen = s;
 		if (freqName == "")
 		{
 			s->freq(data->get_params()["freq"]);
 		}
 		else
 		{
-			s->freq(*_create_generator(freqName));
+			ControlGenerator* cg = _get_control_generator(freqName);
+			if (cg != NULL)
+			{
+				s->freq(*cg);
+			}
+			else
+			{
+				s->freq(*_get_generator(freqName));
+			}
 		}
-	} break;
+		return s;
+	}
 	case NodeData::NodeType::NODE_ADD: {
 		Adder* a = memnew(Adder());
-		gen = a;
-
 		String name_a = _get_node_connected_to(name, 0);
 		if (name_a != "")
 		{
-			a->input(*_create_generator(name_a));
+			a->input(*_get_generator(name_a));
 		}
-
 		String name_b = _get_node_connected_to(name, 1);
 		if (name_b != "")
 		{
-			a->input(*_create_generator(name_b));
+			a->input(*_get_generator(name_b));
 		}
 		else
 		{
 			a->input(FixedValue(data->get_params()["value"]));
 		}
-	} break;
+		return a;
+	}
 	case NodeData::NodeType::NODE_MULTIPLY: {
 		Multiplier* a = memnew(Multiplier());
-		gen = a;
-
 		String name_a = _get_node_connected_to(name, 0);
 		if (name_a != "")
 		{
-			a->input(*_create_generator(name_a));
+			a->input(*_get_generator(name_a));
 		}
-
 		String name_b = _get_node_connected_to(name, 1);
 		if (name_b != "")
 		{
-			a->input(*_create_generator(name_b));
+			a->input(*_get_generator(name_b));
 		}
 		else
 		{
 			a->input(FixedValue(data->get_params()["value"]));
 		}
-	} break;
+		return a;
+	}
+	case NodeData::NodeType::NODE_PARAMETER:
 	case NodeData::NodeType::NODE_SPECIAL:
 	case NodeData::NodeType::NODE_COMMENT:
-		break;
+	default:
+		return memnew(FixedValue(0));
+	}
+}
+
+Tonic::ControlGenerator* ModularSynthesizerPlayback::_get_control_generator(const String& name)
+{
+	if (control_generators.has(name))
+	{
+		return control_generators[name];
 	}
 
-	gens.insert(name, gen);
+	ControlGenerator* gen = _create_control_generator(name);
+	control_generators.insert(name, gen);
 	return gen;
 }
 
-String ModularSynthesizerPlayback::_get_node_connected_to(String name, int index)
+Tonic::ControlGenerator* ModularSynthesizerPlayback::_create_control_generator(const String& name)
+{
+	if (name == "")
+	{
+		return NULL;
+	}
+
+	Ref<NodeData> data = res->get_nodes()[name];
+	switch (data->get_type())
+	{
+	case NodeData::NodeType::NODE_PARAMETER: {
+		String name = data->get_params()["name"];
+		ControlParameter* c = memnew(ControlParameter);
+		std::wstring ws = name.c_str();
+		std::string s(ws.begin(), ws.end());
+		c->name(s);
+		synth.addParameter(*c);
+		return c;
+	}
+	case NodeData::NodeType::NODE_CONSTANT:
+	case NodeData::NodeType::NODE_SINE_WAVE:
+	case NodeData::NodeType::NODE_ADD:
+	case NodeData::NodeType::NODE_MULTIPLY:
+	case NodeData::NodeType::NODE_SPECIAL:
+	case NodeData::NodeType::NODE_COMMENT:
+	default:
+		return NULL;
+	}
+}
+
+String ModularSynthesizerPlayback::_get_node_connected_to(const String& name, int index)
 {
 	for (size_t i = 0; i < res->get_connections().size(); i++)
 	{

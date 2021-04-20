@@ -9,6 +9,7 @@ Ref<AudioStreamPlayback> ModularSynthesizer::instance_playback() {
 	playback.instance();
 	playback->res = this;
 	this->connect("changed", playback.ptr(), "resource_changed");
+	this->connect("parameter_changed", playback.ptr(), "parameter_changed");
 	return playback;
 }
 
@@ -32,4 +33,12 @@ void ModularSynthesizer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_offset"), &ModularSynthesizer::set_offset);
 	ClassDB::bind_method(D_METHOD("get_offset"), &ModularSynthesizer::get_offset);
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "offset", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_offset", "get_offset");
+
+	ClassDB::bind_method(D_METHOD("set_parameter"), &ModularSynthesizer::set_parameter);
+	ADD_SIGNAL(MethodInfo("parameter_changed", PropertyInfo(Variant::STRING, "name"), PropertyInfo(Variant::REAL, "value")));
+}
+
+void ModularSynthesizer::set_parameter(const String& p_name, float p_value)
+{
+	emit_signal("parameter_changed", p_name, p_value);
 }

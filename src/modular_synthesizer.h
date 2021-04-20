@@ -18,6 +18,8 @@ protected:
 	static void _bind_methods();
 
 public:
+	void set_parameter(const String& p_name, float p_value);
+
 	void set_nodes(Dictionary value) { nodes = value; }
 	Dictionary get_nodes() const { return nodes; }
 	void set_connections(Array value) { connections = value; }
