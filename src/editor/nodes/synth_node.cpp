@@ -3,7 +3,7 @@
 
 void SynthNode::_offset_changed()
 {
-	data->set_position(get_offset());
+	data->set_position(get_offset() / EDSCALE);
 }
 
 void SynthNode::_update_node_size_text(String p_text)
