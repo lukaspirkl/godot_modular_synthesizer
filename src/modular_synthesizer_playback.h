@@ -7,7 +7,6 @@
 
 class ModularSynthesizerPlayback : public AudioStreamPlayback {
 	GDCLASS(ModularSynthesizerPlayback, AudioStreamPlayback);
-	friend class ModularSynthesizer;
 
 	bool active;
 	bool is_res_up_to_date = false;
@@ -22,11 +21,14 @@ class ModularSynthesizerPlayback : public AudioStreamPlayback {
 	Tonic::Generator* _create_generator(const String& name);
 	Tonic::ControlGenerator* _get_control_generator(const String& name);
 	Tonic::ControlGenerator* _create_control_generator(const String& name);
+	void _refresh_synth();
 
 protected:
 	static void _bind_methods();
 
 public:
+	void set_resource(ModularSynthesizer* res);
+
 	void resource_changed();
 	void parameter_changed(const String& p_name, float p_value);
 
