@@ -16,6 +16,7 @@ void NodeData::_bind_methods()
 	BIND_ENUM_CONSTANT(NODE_MULTIPLY);
 	BIND_ENUM_CONSTANT(NODE_PARAMETER);
 	BIND_ENUM_CONSTANT(NODE_COMMENT);
+	BIND_ENUM_CONSTANT(NODE_ADSR);
 
 	ClassDB::bind_method(D_METHOD("set_params"), &NodeData::set_params);
 	ClassDB::bind_method(D_METHOD("get_params"), &NodeData::get_params);

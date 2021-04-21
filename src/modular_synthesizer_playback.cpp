@@ -150,6 +150,20 @@ Generator* ModularSynthesizerPlayback::_create_generator(const String& name)
 		}
 		return a;
 	}
+	case NodeData::NodeType::NODE_ADSR: {
+		ADSR* adsr = memnew(ADSR);
+		adsr->attack(data->get_params()["a"]);
+		adsr->decay(data->get_params()["d"]);
+		adsr->sustain(data->get_params()["s"]);
+		adsr->release(data->get_params()["r"]);
+		adsr->legato(true);
+		String name_trig = _get_node_connected_to(name, 0);
+		if (name_trig != "")
+		{
+			adsr->trigger(*_get_control_generator(name_trig));
+		}
+		return adsr;
+	}
 	case NodeData::NodeType::NODE_PARAMETER:
 	case NodeData::NodeType::NODE_SPECIAL:
 	case NodeData::NodeType::NODE_COMMENT:
@@ -189,6 +203,7 @@ Tonic::ControlGenerator* ModularSynthesizerPlayback::_create_control_generator(c
 		synth.addParameter(*c);
 		return c;
 	}
+	case NodeData::NodeType::NODE_ADSR:
 	case NodeData::NodeType::NODE_CONSTANT:
 	case NodeData::NodeType::NODE_SINE_WAVE:
 	case NodeData::NodeType::NODE_ADD:
