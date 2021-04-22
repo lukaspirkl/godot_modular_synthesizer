@@ -41,6 +41,7 @@ ParameterNode::ParameterNode(Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_da
 	add_child(name);
 
 	NumberValueEditor* value = memnew(NumberValueEditor(this, p_synth, p_data, "Value", "value", 0));
+	value->do_not_emit_change_signal();
 	value->get_spin_box()->connect("value_changed", this, "_value_changed");
 	add_child(value);
 

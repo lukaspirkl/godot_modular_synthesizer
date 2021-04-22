@@ -6,7 +6,10 @@
 void NumberValueEditor::_value_changed(double value)
 {
 	data->get_params()[param_name] = value;
-	synth->emit_signal("changed");
+	if (emit_change_signal)
+	{
+		synth->emit_signal("changed");
+	}
 }
 
 void NumberValueEditor::_bind_methods()
@@ -36,7 +39,11 @@ NumberValueEditor::NumberValueEditor(SynthNode* parent, Ref<ModularSynthesizer> 
 	add_child(value_spin_box);
 }
 
-
+NumberValueEditor* NumberValueEditor::do_not_emit_change_signal()
+{
+	emit_change_signal = false;
+	return this;
+}
 
 SpinBox* NumberValueEditor::get_spin_box()
 {
