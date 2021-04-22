@@ -6,7 +6,7 @@
 class SineWaveGeneratorNode : public SynthNode {
 	GDCLASS(SineWaveGeneratorNode, SynthNode);
 
-	class ValueEditor* freq;
+	class NumberValueEditor* freq;
 
 protected:
 	static void _bind_methods();

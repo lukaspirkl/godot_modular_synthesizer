@@ -201,6 +201,7 @@ Tonic::ControlGenerator* ModularSynthesizerPlayback::_create_control_generator(c
 		std::wstring ws = name.c_str();
 		std::string s(ws.begin(), ws.end());
 		c->name(s);
+		c->value(data->get_params()["value"]);
 		synth.addParameter(*c);
 		return c;
 	}

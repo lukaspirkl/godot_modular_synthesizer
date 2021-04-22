@@ -6,8 +6,8 @@
 #include "../../modular_synthesizer.h"
 #include "synth_node.h"
 
-class ValueEditor : public HBoxContainer {
-	GDCLASS(ValueEditor, HBoxContainer)
+class NumberValueEditor : public HBoxContainer {
+	GDCLASS(NumberValueEditor, HBoxContainer)
 
 	Ref<NodeData> data;
 	Ref<ModularSynthesizer> synth;
@@ -20,7 +20,8 @@ protected:
 	static void _bind_methods();
 
 public:
-	ValueEditor* set_suffix(const String& p_suffix);
+	class SpinBox* get_spin_box();
+	NumberValueEditor* set_suffix(const String& p_suffix);
 	void hide_value();
-	ValueEditor(SynthNode* parent, Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data, const String& p_label, const String& p_param_name, double p_default_value);
+	NumberValueEditor(SynthNode* parent, Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data, const String& p_label, const String& p_param_name, double p_default_value);
 };

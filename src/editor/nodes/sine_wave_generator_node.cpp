@@ -2,7 +2,7 @@
 #include "scene/gui/box_container.h"
 #include "scene/gui/label.h"
 
-#include "value_editor.h"
+#include "number_value_editor.h"
 #include "sine_wave_generator_node.h"
 
 void SineWaveGeneratorNode::_bind_methods()
@@ -20,7 +20,7 @@ SineWaveGeneratorNode::SineWaveGeneratorNode(Ref<ModularSynthesizer> p_synth, Re
 {
 	set_title("Sine Wave");
 	
-	freq = memnew(ValueEditor(this, p_synth, p_data, "Freq", "freq", 440));
+	freq = memnew(NumberValueEditor(this, p_synth, p_data, "Freq", "freq", 440));
 	freq->set_suffix("Hz");
 	add_child(freq);
 

@@ -1,20 +1,20 @@
 #include "scene/gui/label.h"
 #include "scene/gui/spin_box.h"
 
-#include "value_editor.h"
+#include "number_value_editor.h"
 
-void ValueEditor::_value_changed(double value)
+void NumberValueEditor::_value_changed(double value)
 {
 	data->get_params()[param_name] = value;
 	synth->emit_signal("changed");
 }
 
-void ValueEditor::_bind_methods()
+void NumberValueEditor::_bind_methods()
 {
-	ClassDB::bind_method("_value_changed", &ValueEditor::_value_changed);
+	ClassDB::bind_method("_value_changed", &NumberValueEditor::_value_changed);
 }
 
-ValueEditor::ValueEditor(SynthNode* parent, Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data, const String& p_label, const String& p_param_name, double p_default_value)
+NumberValueEditor::NumberValueEditor(SynthNode* parent, Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data, const String& p_label, const String& p_param_name, double p_default_value)
 	: synth(p_synth), data(p_data), param_name(p_param_name)
 {
 	Label* label = memnew(Label);
@@ -36,12 +36,19 @@ ValueEditor::ValueEditor(SynthNode* parent, Ref<ModularSynthesizer> p_synth, Ref
 	add_child(value_spin_box);
 }
 
-ValueEditor* ValueEditor::set_suffix(const String& p_suffix) {
+
+
+SpinBox* NumberValueEditor::get_spin_box()
+{
+	return value_spin_box;
+}
+
+NumberValueEditor* NumberValueEditor::set_suffix(const String& p_suffix) {
 	value_spin_box->set_suffix(p_suffix);
 	return this;
 }
 
-void ValueEditor::hide_value()
+void NumberValueEditor::hide_value()
 {
 	value_spin_box->set_visible(false);
 }

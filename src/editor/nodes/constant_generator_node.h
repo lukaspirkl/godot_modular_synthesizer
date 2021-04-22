@@ -6,8 +6,6 @@
 class ConstantGeneratorNode : public SynthNode {
 	GDCLASS(ConstantGeneratorNode, SynthNode);
 
-	void _value_changed(double value);
-
 protected:
 	static void _bind_methods();
 

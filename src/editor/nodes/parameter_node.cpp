@@ -1,12 +1,16 @@
+#include "scene/gui/box_container.h"
+#include "scene/gui/label.h"
 #include "scene/gui/line_edit.h"
 #include "scene/gui/button.h"
+#include "scene/gui/spin_box.h"
 
+#include "text_value_editor.h"
+#include "number_value_editor.h"
 #include "parameter_node.h"
 
-void ParameterNode::_name_changed(const String& text)
+void ParameterNode::_value_changed(double value)
 {
-	data->get_params()["name"] = text;
-	synth->emit_signal("changed");
+	synth->set_parameter(data->get_params()["name"], (float)value);
 }
 
 void ParameterNode::_trigger_down()
@@ -21,21 +25,24 @@ void ParameterNode::_trigger_up()
 
 void ParameterNode::_bind_methods()
 {
-	ClassDB::bind_method("_name_changed", &ParameterNode::_name_changed);
 	ClassDB::bind_method("_trigger_down", &ParameterNode::_trigger_down);
 	ClassDB::bind_method("_trigger_up", &ParameterNode::_trigger_up);
+	ClassDB::bind_method("_value_changed", &ParameterNode::_value_changed);
 }
 
 ParameterNode::ParameterNode(Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data)
 	: SynthNode(p_synth, p_data)
 {
-	set_title("Parameter");
+	set_title("Runtime Parameter");
 
-	LineEdit* name = memnew(LineEdit);
-	name->set_text(data->get_params()["name"]);
-	name->connect("text_changed", this, "_name_changed");
-	add_child(name);
 	set_slot(0, false, 10, Color(1, 1, 1), true, 10, Color(1, 1, 1));
+
+	TextValueEditor* name = memnew(TextValueEditor(this, p_synth, p_data, "Name", "name", ""));
+	add_child(name);
+
+	NumberValueEditor* value = memnew(NumberValueEditor(this, p_synth, p_data, "Value", "value", 0));
+	value->get_spin_box()->connect("value_changed", this, "_value_changed");
+	add_child(value);
 
 	Button* button = memnew(Button);
 	button->set_text("Trigger");

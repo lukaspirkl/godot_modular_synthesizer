@@ -6,7 +6,7 @@
 class MergeNode : public SynthNode {
 	GDCLASS(MergeNode, SynthNode);
 
-	class ValueEditor* value;
+	class NumberValueEditor* value;
 
 protected:
 	static void _bind_methods();

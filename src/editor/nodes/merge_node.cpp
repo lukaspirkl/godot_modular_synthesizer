@@ -1,6 +1,6 @@
 #include "scene/gui/label.h"
 
-#include "value_editor.h"
+#include "number_value_editor.h"
 #include "merge_node.h"
 
 void MergeNode::_bind_methods()
@@ -25,7 +25,7 @@ MergeNode::MergeNode(Ref<ModularSynthesizer> p_synth, Ref<NodeData> p_data)
 	a->set_text("A");
 	add_child(a);
 
-	value = memnew(ValueEditor(this, p_synth, p_data, "B", "value", 0));
+	value = memnew(NumberValueEditor(this, p_synth, p_data, "B", "value", 0));
 	add_child(value);
 
 	set_slot(0, true, 10, Color(1, 1, 1), true, 10, Color(1, 1, 1));
