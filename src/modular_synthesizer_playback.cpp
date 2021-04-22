@@ -18,6 +18,7 @@ void ModularSynthesizerPlayback::set_resource(ModularSynthesizer* p_res)
 void ModularSynthesizerPlayback::resource_changed()
 {
 	is_res_up_to_date = false;
+	_refresh_synth();
 }
 
 void ModularSynthesizerPlayback::parameter_changed(const String& p_name, float p_value)
@@ -29,12 +30,12 @@ void ModularSynthesizerPlayback::parameter_changed(const String& p_name, float p
 
 void ModularSynthesizerPlayback::start(float p_from_pos) {
 	active = true;
-	pos = 0;
 	_refresh_synth();
 }
 
 void ModularSynthesizerPlayback::_refresh_synth()
 {
+	pos = 0;
 	if (!is_res_up_to_date)
 	{
 		for (Map<String, Generator*>::Element* E = generators.back(); E; E = E->prev())

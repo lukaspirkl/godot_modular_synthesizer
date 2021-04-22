@@ -7,6 +7,8 @@ class ParameterNode : public SynthNode {
 	GDCLASS(ParameterNode, SynthNode);
 
 	void _name_changed(const String& text);
+	void _trigger_down();
+	void _trigger_up();
 
 protected:
 	static void _bind_methods();
