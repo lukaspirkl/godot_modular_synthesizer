@@ -187,8 +187,6 @@ void ModularSynthesizerEditor::_scroll_changed(const Vector2& p_scroll)
 
 void ModularSynthesizerEditor::_refresh_graph()
 {
-	graph->set_scroll_ofs(synth->get_offset() * EDSCALE);
-
 	graph->clear_connections();
 
 	for (int i = 0; i < graph->get_child_count(); i++)
@@ -225,4 +223,6 @@ void ModularSynthesizerEditor::_refresh_graph()
 		Object::cast_to<SynthNode>(graph->get_node(c->get_to()))->input_connected(c->get_to_index());
 		graph->connect_node(c->get_from(), c->get_from_index(), c->get_to(), c->get_to_index());
 	}
+
+	graph->set_scroll_ofs(synth->get_offset() * EDSCALE);
 }

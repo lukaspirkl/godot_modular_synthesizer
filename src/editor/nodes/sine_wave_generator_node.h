@@ -6,9 +6,7 @@
 class SineWaveGeneratorNode : public SynthNode {
 	GDCLASS(SineWaveGeneratorNode, SynthNode);
 
-	class SpinBox* freq;
-
-	void _freq_changed(double value);
+	class ValueEditor* freq;
 
 protected:
 	static void _bind_methods();

@@ -6,9 +6,7 @@
 class MergeNode : public SynthNode {
 	GDCLASS(MergeNode, SynthNode);
 
-	class SpinBox* value;
-
-	void _value_changed(double value);
+	class ValueEditor* value;
 
 protected:
 	static void _bind_methods();
