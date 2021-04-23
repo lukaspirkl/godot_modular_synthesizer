@@ -166,6 +166,7 @@ Generator* ModularSynthesizerPlayback::_create_generator(const String& name)
 		return adsr;
 	}
 	case NodeData::NodeType::NODE_PARAMETER:
+	case NodeData::NodeType::NODE_METRONOME:
 	case NodeData::NodeType::NODE_SPECIAL:
 	case NodeData::NodeType::NODE_COMMENT:
 	default:
@@ -204,6 +205,9 @@ Tonic::ControlGenerator* ModularSynthesizerPlayback::_create_control_generator(c
 		c->value(data->get_params()["value"]);
 		synth.addParameter(*c);
 		return c;
+	}
+	case NodeData::NodeType::NODE_METRONOME: {
+		return memnew(ControlMetro(data->get_params()["bpm"]));
 	}
 	case NodeData::NodeType::NODE_ADSR:
 	case NodeData::NodeType::NODE_CONSTANT:

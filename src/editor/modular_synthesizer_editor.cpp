@@ -11,6 +11,7 @@
 #include "nodes/parameter_node.h"
 #include "nodes/comment_node.h"
 #include "nodes/adsr_node.h"
+#include "nodes/metronome_node.h"
 #include "../connection_data.h"
 
 void ModularSynthesizerEditor::_bind_methods()
@@ -46,6 +47,7 @@ ModularSynthesizerEditor::ModularSynthesizerEditor() {
 	context_menu->add_item("Add", NodeData::NodeType::NODE_ADD);
 	context_menu->add_item("Multiply", NodeData::NodeType::NODE_MULTIPLY);
 	context_menu->add_separator();
+	context_menu->add_item("Metronome", NodeData::NodeType::NODE_METRONOME);
 	context_menu->add_item("ADSR Envelope", NodeData::NodeType::NODE_ADSR);
 	context_menu->add_separator();
 	context_menu->add_item("Comment", NodeData::NodeType::NODE_COMMENT);
@@ -67,6 +69,8 @@ SynthNode* ModularSynthesizerEditor::_create_node(Ref<NodeData> p_data)
 		return memnew(MultiplyNode(synth, p_data));
 	case NodeData::NodeType::NODE_PARAMETER:
 		return memnew(ParameterNode(synth, p_data));
+	case NodeData::NodeType::NODE_METRONOME:
+		return memnew(MetronomeNode(synth, p_data));
 	case NodeData::NodeType::NODE_ADSR:
 		return memnew(ADSRNode(synth, p_data));
 	case NodeData::NodeType::NODE_COMMENT:
