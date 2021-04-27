@@ -30,9 +30,9 @@ TextValueEditor::TextValueEditor(SynthNode* parent, Ref<ModularSynthesizer> p_sy
 	value_line_edit->connect("text_changed", this, "_text_changed");
 	value_line_edit->set_expand_to_text_length(true);
 	value_line_edit->connect("text_changed", parent, "_update_node_size_text");
+	value_line_edit->set_h_size_flags(SIZE_EXPAND_FILL);
 	add_child(value_line_edit);
 }
-
 
 void TextValueEditor::hide_value()
 {

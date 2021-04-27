@@ -6,9 +6,11 @@
 class ParameterNode : public SynthNode {
 	GDCLASS(ParameterNode, SynthNode);
 
-	void _trigger_down();
-	void _trigger_up();
-	void _value_changed(double value);
+	NumberValueEditor* min;
+	NumberValueEditor* max;
+	NumberValueEditor* default_value;
+
+	void _is_trigger_toggled(bool p_value);
 
 protected:
 	static void _bind_methods();

@@ -5,8 +5,7 @@
 using namespace Tonic;
 
 void ModularSynthesizerPlayback::_bind_methods() {
-	ClassDB::bind_method("resource_changed", &ModularSynthesizerPlayback::resource_changed);
-	ClassDB::bind_method("parameter_changed", &ModularSynthesizerPlayback::parameter_changed);
+	ClassDB::bind_method("parameter_changed", &ModularSynthesizerPlayback::set_parameter);
 }
 
 void ModularSynthesizerPlayback::set_resource(ModularSynthesizer* p_res)
@@ -15,57 +14,50 @@ void ModularSynthesizerPlayback::set_resource(ModularSynthesizer* p_res)
 	_refresh_synth();
 }
 
-void ModularSynthesizerPlayback::resource_changed()
-{
-	is_res_up_to_date = false;
-	_refresh_synth();
-}
-
-void ModularSynthesizerPlayback::parameter_changed(const String& p_name, float p_value)
+void ModularSynthesizerPlayback::set_parameter(const String& p_name, float p_value)
 {
 	std::wstring ws = p_name.c_str();
 	std::string s(ws.begin(), ws.end());
-	synth.setParameter(s, p_value);
+	synth->setParameter(s, p_value);
 }
 
 void ModularSynthesizerPlayback::start(float p_from_pos) {
 	active = true;
-	_refresh_synth();
 }
 
 void ModularSynthesizerPlayback::_refresh_synth()
 {
 	pos = 0;
-	if (!is_res_up_to_date)
+	Synth* old_synth = synth;
+	synth = new Synth();
+
+	for (Map<String, Generator*>::Element* E = generators.back(); E; E = E->prev())
 	{
-		for (Map<String, Generator*>::Element* E = generators.back(); E; E = E->prev())
+		Generator* gen = E->value();
+		if (gen != NULL)
 		{
-			Generator* gen = E->value();
-			if (gen != NULL)
-			{
-				memdelete(gen);
-			}
+			memdelete(gen);
 		}
-		generators.clear();
-
-		for (Map<String, ControlGenerator*>::Element* E = control_generators.back(); E; E = E->prev())
-		{
-			ControlGenerator* gen = E->value();
-			if (gen != NULL)
-			{
-				memdelete(gen);
-			}
-		}
-		control_generators.clear();
-
-		String name = _get_node_connected_to("OutputNode", 0);
-		Generator* gen = _get_generator(name);
-		synth.setOutputGen(*gen);
-		is_res_up_to_date = true;
 	}
-	else
+	generators.clear();
+
+	for (Map<String, ControlGenerator*>::Element* E = control_generators.back(); E; E = E->prev())
 	{
-		synth.forceNewOutput();
+		ControlGenerator* gen = E->value();
+		if (gen != NULL)
+		{
+			memdelete(gen);
+		}
+	}
+	control_generators.clear();
+
+	String name = _get_node_connected_to("OutputNode", 0);
+	Generator* gen = _get_generator(name);
+	synth->setOutputGen(*gen);
+
+	if (old_synth != NULL)
+	{
+		delete old_synth;
 	}
 }
 
@@ -199,11 +191,14 @@ Tonic::ControlGenerator* ModularSynthesizerPlayback::_create_control_generator(c
 	case NodeData::NodeType::NODE_PARAMETER: {
 		String name = data->get_params()["name"];
 		ControlParameter* c = memnew(ControlParameter);
+		c->parameterType(data->get_params()["is_trigger"] ? ControlParameterType::ControlParameterTypeToggle : ControlParameterType::ControlParameterTypeContinuous);
+		c->min(data->get_params()["min"]);
+		c->max(data->get_params()["max"]);
+		c->value(data->get_params()["default"]);
 		std::wstring ws = name.c_str();
 		std::string s(ws.begin(), ws.end());
 		c->name(s);
-		c->value(data->get_params()["value"]);
-		synth.addParameter(*c);
+		synth->addParameter(*c);
 		return c;
 	}
 	case NodeData::NodeType::NODE_METRONOME: {
@@ -255,7 +250,7 @@ void ModularSynthesizerPlayback::seek(float p_time) {
 }
 
 void ModularSynthesizerPlayback::mix(AudioFrame* p_buffer, float p_rate_scale, int p_frames) {
-	synth.fillBufferOfFloats((float*)p_buffer, p_frames, 2);
+	synth->fillBufferOfFloats((float*)p_buffer, p_frames, 2);
 	pos += p_frames;
 
 	if (res->get_length() != 0 && pos >= res->get_length() * Tonic::sampleRate())

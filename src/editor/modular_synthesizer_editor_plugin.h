@@ -9,7 +9,7 @@
 class ModularSynthesizerEditorPlugin : public EditorPlugin {
 	GDCLASS(ModularSynthesizerEditorPlugin, EditorPlugin);
 
-	ModularSynthesizerEditor *modular_synthesizer_editor;
+	ModularSynthesizerEditor* modular_synthesizer_editor;
 	EditorNode *editor;
 	Button *button;
 

@@ -4,15 +4,21 @@
 
 #include "../thirdparty/tonic/src/Tonic.h"
 #include "modular_synthesizer.h"
+#ifdef TOOLS_ENABLED
+#include "editor/modular_synthesizer_player_editor.h"
+#endif
 
 class ModularSynthesizerPlayback : public AudioStreamPlayback {
 	GDCLASS(ModularSynthesizerPlayback, AudioStreamPlayback);
+	friend ModularSynthesizer;
+#ifdef TOOLS_ENABLED
+	friend ModularSynthesizerPlayerEditor;
+#endif
 
 	bool active;
-	bool is_res_up_to_date = false;
 	ModularSynthesizer* res;
 	uint64_t pos;
-	Tonic::Synth synth;
+	Tonic::Synth* synth = NULL;
 	Map<String, Tonic::Generator*> generators;
 	Map<String, Tonic::ControlGenerator*> control_generators;
 
@@ -23,14 +29,13 @@ class ModularSynthesizerPlayback : public AudioStreamPlayback {
 	Tonic::ControlGenerator* _create_control_generator(const String& name);
 	void _refresh_synth();
 
+	void set_resource(ModularSynthesizer* res);
+
 protected:
 	static void _bind_methods();
 
 public:
-	void set_resource(ModularSynthesizer* res);
-
-	void resource_changed();
-	void parameter_changed(const String& p_name, float p_value);
+	void set_parameter(const String& p_name, float p_value);
 
 	virtual void start(float p_from_pos = 0.0);
 	virtual void stop();

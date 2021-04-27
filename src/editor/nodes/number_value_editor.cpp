@@ -36,6 +36,7 @@ NumberValueEditor::NumberValueEditor(SynthNode* parent, Ref<ModularSynthesizer> 
 	value_spin_box->connect("value_changed", this, "_value_changed");
 	value_spin_box->get_line_edit()->set_expand_to_text_length(true);
 	value_spin_box->get_line_edit()->connect("text_changed", parent, "_update_node_size_text");
+	value_spin_box->set_h_size_flags(SIZE_EXPAND_FILL);
 	add_child(value_spin_box);
 }
 
